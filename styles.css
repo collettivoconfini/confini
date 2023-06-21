@@ -9,13 +9,21 @@ a {
 
 body {
   background-image: url("immagini/cornice.gif");
-  background-size: cover;
+      background-size: cover;
+      transition: background-image 0.5s ease;
   font-family: 'helvetica';
   color: white;
   text-align: center;
 }
 
 h1{ font-size:3rem;}
+
+#festival-title {
+  font-family: 'star_jedi_logo_monolineRg';
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
 
 .container {
   display: flex;
@@ -69,17 +77,29 @@ h1{ font-size:3rem;}
   animation: colorChange 2s linear infinite alternate;
 }
 
+#vera {
+  color: white;
+  animation: rainbow 5s infinite;
+}
+
+
+@keyframes rainbow {
+  0% { color: rgb(0, 0, 0); }
+  14% { color: rgb(37, 37, 37); }
+  28% { color: rgb(132, 132, 125); }
+  42% { color: rgb(83, 85, 83); }
+  57% { color: rgb(183, 183, 196); }
+  71% { color: rgb(213, 204, 220); }
+  85% { color: rgb(239, 218, 239); }
+  100% { color: rgb(255, 224, 224); }
+}
+
+
 
 
 
 .date-container {
   margin-bottom: 1rem;
-}
-
-#festival-title {
-  font-family: 'star_jedi_logo_monolineRg';
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
 }
 
 .lineup-container {
@@ -113,4 +133,16 @@ h1{ font-size:3rem;}
   font-weight: normal;
   font-style: normal;
 
+}
+@font-face {
+  font-family: 'alphacloudsregular';
+  src: url('alphaclouds-webfont.woff2') format('woff2'),
+       url('alphaclouds-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+
+}
+
+#small {
+  color: purple;
 }

@@ -7,14 +7,34 @@ document.addEventListener("DOMContentLoaded", function() {
   const carlo = document.getElementById("carlo");
   const corasan = document.getElementById("corasan");
   const death = document.getElementById("death");
+  const vera = document.getElementById("vera");
   const magaze = document.getElementById("magaze");
   const jason = document.getElementById("jason");
   const rododentro = document.getElementById("rododentro");
+  const guests = document.getElementById("guests");
+  const disclaimer = document.getElementsByClassName("disclaimer-container");
 
 // ANIMAZIONE DEL TITOLO
 const title = document.querySelector("#festival-title");
 // Start with a white color
 title.style.color = "white";
+
+//ANIMAZIONE SFONDO
+const images = [
+  "immagini/cornice.gif",
+  "immagini/cornicer.gif",
+  "immagini/cornicel.gif"
+];
+
+let currentIndex = 0;
+
+function changeBackground() {
+  document.body.style.backgroundImage = `url("${images[currentIndex]}")`;
+  currentIndex = (currentIndex + 1) % images.length;
+}
+
+setInterval(changeBackground, 5000);
+
 
 // Set up the animation interval for title
 setInterval(function() {
@@ -53,7 +73,7 @@ setInterval(function() {
 
 // ANIMAZIONE di carlo
 const marlo = document.getElementById("carlo");
-const carloTexts = ["CARLO MARTINELLI (post-punk/boxe con il pubblico)", "MARLO CARTINELLI (post-punk/boxe con il pubblico)"];
+const carloTexts = ["00:00 / 00:30 CARLO MARTINELLI (post-punk/boxe con il pubblico)", "00:00 / 00:30 MARLO CARTINELLI (post-punk/boxe con il pubblico)"];
 let carloIndex = 0;
 
 setInterval(function() {
@@ -64,7 +84,7 @@ setInterval(function() {
 
 // ANIMAZIONE di CORASAN
 const corasao = document.getElementById("corasan");
-const corasanTexts = ["CORASAN (emo/metal/noise)", "CORASAN (60's, pop/brioche)"];
+const corasanTexts = ["23:00 / 23:30 CORASAN (emo/metal/noise)", "23:00 / 23:30 CORASAN (60's, pop/brioche)"];
 let corasaoIndex = 0;
 
 setInterval(function() {
@@ -80,10 +100,6 @@ setInterval(function() {
 }, 2000);
 
 
-
-
-//ANIMAZIONE MAGAZE
-// Your existing JavaScript code...
 
 // ANIMAZIONE di magaze
 const magaze = document.getElementById("magaze");
@@ -121,7 +137,7 @@ magaze.style.animation = "transition 2s infinite";
 
 // After the animation ends, reset the text and styles
 setTimeout(function() {
-  magaze.textContent = "MAGAZE (post-punk/rock/cantautorato)";
+  magaze.textContent = "23:30 / 00:00 MAGAZE (post-punk/rock/cantautorato)";
   magaze.style.animation = "none";
   magaze.style.fontSize = "";
   magaze.style.color = "";
@@ -133,7 +149,7 @@ magaze.style.color = targetColor;
 
 // ANIMAZIONE di mARCELLO
 const marcello = document.getElementById("jason");
-const MARCELLOTexts = ["JASON LA MECCA (MISTO MAME)", "JASON LA MECCA (RISTO MARE)"];
+const MARCELLOTexts = ["22:30 / 23:00 JASON LA MECCA (MISTO MAME)", "22:30 / 23:00 JASON LA MECCA (RISTO MARE)"];
 let marcelloIndex = 0;
 setInterval(function() {
   marcello.textContent = MARCELLOTexts[marcelloIndex];
@@ -141,7 +157,9 @@ setInterval(function() {
 }, 1000);
 
 
-//rodo
+
+
+//rodo ANIMAZIONE (IL RESTO STA NEL CSS)
 const rododentro = document.getElementById("rododentro");
 
 // Define the target colors
@@ -166,3 +184,16 @@ characters.forEach((char, index) => {
 // Apply the wrapper element to the rododentro element
 rododentro.innerHTML = "";
 rododentro.appendChild(wrapperElement);
+
+//animazione VERA
+const vera = document.getElementById("vera");
+vera.style.animation = "rainbow 5s infinite";
+
+//animazione guests
+const guests = document.getElementById("guests");
+//this should have next to the phrase "+guests" appear from nothing and then disappear slowly the phrase ""
+
+
+//DISCLAIMER ANIMAZIONE
+const disclaimer = document.getElementsByClassName("disclaimer-container");
+//here
