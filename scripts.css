@@ -1,0 +1,22 @@
+// scripts.js
+
+document.addEventListener("DOMContentLoaded", function() {
+  const logo = document.getElementById("logo");
+  const festivalTitle = document.getElementById("festival-title");
+  const lineup = document.getElementById("lineup");
+  const carlo = document.getElementById("carlo");
+  const corasan = document.getElementById("corasan");
+  const death = document.getElementById("death");
+  const magaze = document.getElementById("magaze");
+  const jason = document.getElementById("jason");
+  const rododentro = document.getElementById("rododentro");
+
+  // Title animations
+  // Insert your code for the title animations here
+
+  // Lineup animations
+  // Insert your code for the lineup animations here
+
+  // Disclaimer animations
+  // Insert your code for the disclaimer animations here
+});

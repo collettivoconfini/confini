@@ -1,0 +1,47 @@
+/* styles.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-image: url("immagini/cornice.jpg");
+  background-size: cover;
+  font-family: 'Fascinate Inline', cursive;
+  color: white;
+  text-align: center;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.title-container {
+  margin-bottom: 1rem;
+}
+
+#logo {
+  display: none;
+  font-family: 'Rock 3D', cursive;
+}
+
+#festival-title {
+  text-shadow: 2px 2px 1px rgba(0, 0, 0, 0.5);
+}
+
+.lineup-container {
+  margin-bottom: 1rem;
+}
+
+.lineup-container ul {
+  list-style: none;
+}
+
+.disclaimer-container p {
+  margin: 0.5rem 0;
+}
