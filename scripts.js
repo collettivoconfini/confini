@@ -22,8 +22,8 @@ title.style.color = "white";
 //ANIMAZIONE SFONDO
 const images = [
   "immagini/cornice.gif",
-  "immagini/cornicer.gif",
-  "immagini/cornicel.gif"
+  "immagini/corniceR.gif",
+  "immagini/corniceL.gif"
 ];
 
 let currentIndex = 0;
