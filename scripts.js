@@ -14,26 +14,19 @@ document.addEventListener("DOMContentLoaded", function() {
   const guests = document.getElementById("guests");
   const disclaimer = document.getElementsByClassName("disclaimer-container");
 
-// ANIMAZIONE SFONDO
-const imagesDesktop = [
+// ANIMAZIONE DEL TITOLO
+const title = document.querySelector("#festival-title");
+// Start with a white color
+title.style.color = "white";
+
+//ANIMAZIONE SFONDO
+const images = [
   "immagini/cornice.gif",
   "immagini/corniceR.gif",
   "immagini/corniceL.gif"
 ];
 
-const imagesMobile = [
-  "immagini/corniceR.gif"
-];
-
-let images = imagesDesktop;
 let currentIndex = 0;
-
-// Check if the device is a mobile device with iPhone 12 viewport width
-const isMobileDevice = window.matchMedia("(max-width: 390px)").matches;
-
-if (isMobileDevice) {
-  images = imagesMobile;
-}
 
 function changeBackground() {
   document.body.style.backgroundImage = `url("${images[currentIndex]}")`;
