@@ -22,7 +22,12 @@ h1{ font-size:3rem;}
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 80vh;
+}
+#festival-date {
+  font-family: 'star_jedi_logo_monolineRg';
+  color: rgb(210, 157, 11);
+  margin-top: -2rem;
 }
 
 @keyframes fadeOut {
@@ -67,13 +72,14 @@ h1{ font-size:3rem;}
 
 
 
-.title-container {
+.date-container {
   margin-bottom: 1rem;
 }
 
 #festival-title {
   font-family: 'star_jedi_logo_monolineRg';
-  text-shadow: 2px 2px 1px rgba(0, 0, 0, 0.5);
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
 }
 
 .lineup-container {
