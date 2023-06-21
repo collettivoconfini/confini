@@ -73,24 +73,32 @@ setInterval(function() {
 
 // ANIMAZIONE di carlo
 const marlo = document.getElementById("carlo");
-const carloTexts = ["00:00 / 00:30 CARLO MARTINELLI (post-punk/boxe con il pubblico)", "00:00 / 00:30 MARLO CARTINELLI (post-punk/boxe con il pubblico)"];
+const carloTexts = [
+  '00:00 / 00:30 <a href="https://carlomartinellis.github.io/magiche.html">CARLO MARTINELLI</a> (post-punk/boxe con il pubblico)',
+  '00:00 / 00:30 <a href="https://carlomartinellis.github.io/magiche.html">MARLO CARTINELLI</a> (post-punk/boxe con il pubblico)'
+];
 let carloIndex = 0;
 
 setInterval(function() {
-  marlo.textContent = carloTexts[carloIndex];
+  marlo.innerHTML = carloTexts[carloIndex];
   carloIndex = (carloIndex + 1) % carloTexts.length;
 }, 100);
+
 })
 
 // ANIMAZIONE di CORASAN
 const corasao = document.getElementById("corasan");
-const corasanTexts = ["23:00 / 23:30 CORASAN (emo/metal/noise)", "23:00 / 23:30 CORASAN (60's, pop/brioche)"];
+const corasanTexts = [
+  '<span>23:00 / 23:30 <a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (emo/metal/noise)</span>',
+  '<span>23:00 / 23:30 <a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (60\'s, pop/brioche)</span>'
+];
 let corasaoIndex = 0;
 
 setInterval(function() {
-  corasao.textContent = corasanTexts[corasaoIndex];
+  corasao.innerHTML = corasanTexts[corasaoIndex];
   corasaoIndex = (corasaoIndex + 1) % corasanTexts.length;
 }, 1000);
+
 
 // ANIMAZIONE di death
 const death = document.getElementById("death");
@@ -105,20 +113,21 @@ setInterval(function() {
 const magaze = document.getElementById("magaze");
 
 // Define the target text and its styles
-const targetText = "SUONANO FORTE";
-const targetSize = "1.2em";
-const targetColor = "red";
+const suonanoForteText = "SUONANO FORTE";
+const suonanoForteSize = "1em";
+const suonanoForteColor = "red";
+const magazeText = '23:30 / 00:00 <a href="https://magaze.bandcamp.com/track/estate">MAGAZE</a> (post-punk/rock/cantautorato)';
 
-// Create a CSS animation for the transition
-const animationStyle = `
-  @keyframes transition {
+// Create a CSS animation for the "SUONANO FORTE" transition
+const suonanoForteAnimationStyle = `
+  @keyframes suonanoForteTransition {
     0% {
       opacity: 1;
     }
     50% {
       opacity: 0;
-      transform: scale(1.2);
-      color: ${targetColor};
+      transform: scale(1.1);
+      color: ${suonanoForteColor};
     }
     100% {
       opacity: 1;
@@ -126,35 +135,58 @@ const animationStyle = `
   }
 `;
 
-// Apply the animation style
+// Create a CSS animation for the "MAGAZE" transition
+const magazeAnimationStyle = `
+  @keyframes magazeTransition {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+`;
+
+// Apply the animation styles
 const styleElement = document.createElement("style");
-styleElement.innerHTML = animationStyle;
+styleElement.innerHTML = suonanoForteAnimationStyle + magazeAnimationStyle;
 document.head.appendChild(styleElement);
 
-// Start the animation
-magaze.textContent = targetText;
-magaze.style.animation = "transition 2s infinite";
+// Start the "SUONANO FORTE" animation
+magaze.innerHTML = suonanoForteText;
+magaze.style.animation = "suonanoForteTransition 2s forwards";
 
-// After the animation ends, reset the text and styles
+// After the "SUONANO FORTE" animation ends, switch to the "MAGAZE" text with the link
 setTimeout(function() {
-  magaze.textContent = "23:30 / 00:00 MAGAZE (post-punk/rock/cantautorato)";
+  magaze.innerHTML = magazeText;
   magaze.style.animation = "none";
   magaze.style.fontSize = "";
   magaze.style.color = "";
-}, 4000); // Change the timeout to match the animation duration (2s) plus some extra time
+}, 4000); // Change the timeout to match the "SUONANO FORTE" animation duration (2s) plus some extra time
 
-// Apply the target size and color during the animation
-magaze.style.fontSize = targetSize;
-magaze.style.color = targetColor;
+// Apply the target size and color to "SUONANO FORTE" during the animation
+magaze.style.fontSize = suonanoForteSize;
+magaze.style.color = suonanoForteColor;
+
+
+
+
+
+
 
 // ANIMAZIONE di mARCELLO
 const marcello = document.getElementById("jason");
-const MARCELLOTexts = ["22:30 / 23:00 JASON LA MECCA (MISTO MAME)", "22:30 / 23:00 JASON LA MECCA (RISTO MARE)"];
+const MARCELLOTexts = [
+  '22:30 / 23:00 <a href="https://rosnama-tammat.web.app/">JASON LA MECCA (MISTO MAME)</a>',
+  '22:30 / 23:00 <a href="https://rosnama-tammat.web.app/">JASON LA MECCA (RISTO MARE)</a>'
+];
 let marcelloIndex = 0;
+
 setInterval(function() {
-  marcello.textContent = MARCELLOTexts[marcelloIndex];
+  marcello.innerHTML = MARCELLOTexts[marcelloIndex];
   marcelloIndex = (marcelloIndex + 1) % MARCELLOTexts.length;
 }, 1000);
+
 
 
 
