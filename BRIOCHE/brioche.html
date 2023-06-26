@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corasan Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #controls > div {
+            display: flex;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button id="startBtn">Start Game</button>
+        <canvas id="gameCanvas" width="2000" height="1344"></canvas>
+    </div>
+    <div id="controls">
+        <div>
+            <button id="upBtn">↑</button>
+        </div>
+        <div>
+            <button id="leftBtn">←</button>
+            <button id="downBtn">↓</button>
+            <button id="rightBtn">→</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const upBtn = document.getElementById('upBtn');
+        const downBtn = document.getElementById('downBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const corasanImg = new Image();
+        const briocheImg = new Image();
+        const hashishImg = new Image();
+
+        corasanImg.src = 'corasan.jpg';
+        briocheImg.src = 'brioche.png';
+        hashishImg.src = 'hashish.jpg';
+
+        let gameInterval;
+        let score = 0;
+        let gameOver = false;
+        let briocheHits = 0;
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: 259 / 3,
+            height: 194 / 3,
+            speed: 5,
+        };
+
+        const items = [];
+
+        function drawPlayer() {
+            ctx.drawImage(corasanImg, player.x, player.y, player.width, player.height);
+        }
+
+        function drawScore() {
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText('Score: ' + score, 10, 30);
+        }
+
+        function spawnItems() {
+            const type = Math.random() < 0.5 ? 'brioche' : 'hashish';
+            const x = Math.random() * (canvas.width - 30);
+            const y = -30;
+            const speedX = (Math.random() * 2 - 1) * 2;
+            const speedY = Math.random() * 2 + 1;
+            const item = { type, x, y, width: 30, height: 30, speedX, speedY };
+            items.push(item);
+        }
+
+        function updateItems() {
+            for (const item of items) {
+                item.x += item.speedX;
+                item.y += item.speedY;
+
+                if (item.y > canvas.height) {
+                    items.shift();
+                }
+
+                if (checkCollision(item, player)) {
+                    if (item.type === 'brioche') {
+                        briocheHits++;
+
+                        if (briocheHits >= 10) {
+                            clearInterval(gameInterval);
+                            alert('Game Over! Your score: ' + score);
+                            gameOver = true;
+                        }
+                    } else {
+                        score++;
+                    }
+
+                    items.shift();
+                }
+            }
+        }
+
+        function drawItems() {
+            for (const item of items) {
+                if (item.type === 'brioche') {
+                    ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
+                } else {
+                    ctx.drawImage(hashishImg, item.x, item.y, item.width, item.height);
+                }
+            }
+        }
+
+        function checkCollision(a, b) {
+            return (
+                a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y
+            );
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawScore();
+            drawPlayer();
+            updateItems();
+            drawItems();
+        }
+
+        function startGame() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
+            }
+            gameInterval = setInterval(gameLoop, 1000 / 60);
+            setInterval(spawnItems, 1000);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!gameOver) {
+                startGame();
+            }
+        });
+
+        upBtn.addEventListener('click', () => {
+            if (player.y > 0) {
+                player.y -= player.speed;
+            }
+        });
+
+        downBtn.addEventListener('click', () => {
+            if (player.y < canvas.height - player.height) {
+                player.y += player.speed;
+            }
+        });
+
+        leftBtn.addEventListener('click', () => {
+            if (player.x > 0) {
+                player.x -= player.speed;
+            }
+        });
+
+        rightBtn.addEventListener('click', () => {
+            if (player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+        });
+    </script>
+</body>
+</html>
