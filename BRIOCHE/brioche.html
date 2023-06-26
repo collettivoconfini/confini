@@ -43,7 +43,7 @@
 </head>
 <body>
     <div>
-        <button id="startBtn">Start Game</button>
+        <button id="startBtn" onclick="hideStartButton()">Start Game</button>
         <canvas id="gameCanvas" width="2000" height="1344"></canvas>
     </div>
     <div id="controls">
@@ -66,11 +66,11 @@
         const rightBtn = document.getElementById('rightBtn');
         const corasanImg = new Image();
         const briocheImg = new Image();
-        const hashishImg = new Image();
+        const maryImg = new Image();
 
-        corasanImg.src = 'corasan.jpg';
+        corasanImg.src = 'corasan.png';
         briocheImg.src = 'brioche.png';
-        hashishImg.src = 'hashish.jpg';
+        maryImg.src = 'mary.jpg';
 
         let gameInterval;
         let score = 0;
@@ -87,18 +87,45 @@
 
         const items = [];
 
+        document.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'ArrowUp':
+            if (player.y > 0) {
+                player.y -= player.speed;
+            }
+            break;
+        case 'ArrowDown':
+            if (player.y < canvas.height - player.height) {
+                player.y += player.speed;
+            }
+            break;
+        case 'ArrowLeft':
+            if (player.x > 0) {
+                player.x -= player.speed;
+            }
+            break;
+        case 'ArrowRight':
+            if (player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+            break;
+    }
+});
+
         function drawPlayer() {
             ctx.drawImage(corasanImg, player.x, player.y, player.width, player.height);
         }
 
         function drawScore() {
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText('Score: ' + score, 10, 30);
-        }
+      ctx.font = '200px Arial';
+      ctx.fillStyle = 'yellow';
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      ctx.fillText('Relax: ' + score, centerX, centerY);
+  }
 
         function spawnItems() {
-            const type = Math.random() < 0.5 ? 'brioche' : 'hashish';
+            const type = Math.random() < 0.5 ? 'brioche' : 'mary';
             const x = Math.random() * (canvas.width - 30);
             const y = -30;
             const speedX = (Math.random() * 2 - 1) * 2;
@@ -127,6 +154,8 @@
                         }
                     } else {
                         score++;
+                        console.log('Current score:', score); // Debug statement
+
                     }
 
                     items.shift();
@@ -139,7 +168,7 @@
                 if (item.type === 'brioche') {
                     ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
                 } else {
-                    ctx.drawImage(hashishImg, item.x, item.y, item.width, item.height);
+                    ctx.drawImage(maryImg, item.x, item.y, item.width, item.height);
                 }
             }
         }
@@ -154,12 +183,20 @@
         }
 
         function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawScore();
-            drawPlayer();
-            updateItems();
-            drawItems();
-        }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawScore(); // Call drawScore function here
+      drawPlayer();
+      updateItems();
+      drawItems();
+  }
+
+  function drawScore() {
+      ctx.font = '80px Arial';
+      ctx.fillStyle = 'yellow';
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      ctx.fillText('Relax: ' + score, centerX, centerY);
+  }
 
         function startGame() {
             if (gameInterval) {
@@ -168,6 +205,10 @@
             gameInterval = setInterval(gameLoop, 1000 / 60);
             setInterval(spawnItems, 1000);
         }
+	function hideStartButton() {
+    const startBtn = document.getElementById('startBtn');
+    startBtn.style.display = 'none';
+}
 
         startBtn.addEventListener('click', () => {
             if (!gameOver) {
