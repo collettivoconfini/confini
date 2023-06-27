@@ -6,15 +6,21 @@
     <title>Corasan Game</title>
     <style>
         body {
-             background-image: url('map.jpg');
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+             background-color: red;
+        }
+
+        #divCanvas {
+          display: flex;
+          justify-content: center;
         }
         canvas {
+        background-image: url('map.jpg');
+         background-size: cover;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         height: 100vh;
+         margin: 0;
             border: 10px solid black;
         }
         #controls {
@@ -42,19 +48,12 @@
     </style>
 </head>
 <body>
-    <div>
+    <div id="divCanvas">
         <button id="startBtn" onclick="hideStartButton()">Start Game</button>
         <canvas id="gameCanvas" width="2000" height="1344"></canvas>
+
     </div>
-    <div id="controls">
-        <div>
-            <button id="upBtn">↑</button>
-        </div>
-        <div>
-            <button id="leftBtn">←</button>
-            <button id="downBtn">↓</button>
-            <button id="rightBtn">→</button>
-        </div>
+
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -67,6 +66,8 @@
         const corasanImg = new Image();
         const briocheImg = new Image();
         const maryImg = new Image();
+        const mapImages = ['map.jpg', 'map2.jpg', 'map3.jpg', 'map4.jpg', 'map5.jpg', 'map6.jpg', 'map7.jpg', 'map8.jpg'];
+
 
         corasanImg.src = 'corasan.png';
         briocheImg.src = 'brioche.png';
@@ -76,6 +77,8 @@
         let score = 0;
         let gameOver = false;
         let briocheHits = 0;
+        let currentLevel = 0;
+
 
         const player = {
             x: canvas.width / 2,
@@ -183,12 +186,21 @@
         }
 
         function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawScore(); // Call drawScore function here
-      drawPlayer();
-      updateItems();
-      drawItems();
-  }
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Check the score and change the background map if necessary
+          if (score >= (currentLevel + 1) * 15 && currentLevel < mapImages.length - 1) {
+              currentLevel++;
+              const imageUrl = mapImages[currentLevel];
+              canvas.style.backgroundImage = `url(${imageUrl})`;
+          }
+
+          drawScore();
+          drawPlayer();
+          updateItems();
+          drawItems();
+      }
+
 
   function drawScore() {
       ctx.font = '80px Arial';
@@ -199,6 +211,7 @@
   }
 
         function startGame() {
+          currentLevel = 0;
             if (gameInterval) {
                 clearInterval(gameInterval);
             }
@@ -216,29 +229,49 @@
             }
         });
 
-        upBtn.addEventListener('click', () => {
-            if (player.y > 0) {
-                player.y -= player.speed;
-            }
-        });
+        //MOBILE TOUCH IMPLEMENTATION
 
-        downBtn.addEventListener('click', () => {
-            if (player.y < canvas.height - player.height) {
-                player.y += player.speed;
-            }
-        });
+        const touchControls = {
+  startX: 0,
+  startY: 0,
+  isDragging: false,
+};
 
-        leftBtn.addEventListener('click', () => {
-            if (player.x > 0) {
-                player.x -= player.speed;
-            }
-        });
+canvas.addEventListener('touchstart', handleTouchStart);
+canvas.addEventListener('touchmove', handleTouchMove);
+canvas.addEventListener('touchend', handleTouchEnd);
 
-        rightBtn.addEventListener('click', () => {
-            if (player.x < canvas.width - player.width) {
-                player.x += player.speed;
-            }
-        });
+function handleTouchStart(event) {
+  if (event.touches.length === 1) {
+    const touch = event.touches[0];
+    touchControls.startX = touch.clientX;
+    touchControls.startY = touch.clientY;
+    touchControls.isDragging = true;
+  }
+}
+
+function handleTouchMove(event) {
+  if (touchControls.isDragging) {
+    event.preventDefault(); // Prevent scrolling while dragging on mobile
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - touchControls.startX;
+    const deltaY = touch.clientY - touchControls.startY;
+
+    // Adjust player position based on touch movement
+    player.x += deltaX;
+    player.y += deltaY;
+
+    // Update start position for the next move
+    touchControls.startX = touch.clientX;
+    touchControls.startY = touch.clientY;
+  }
+}
+
+function handleTouchEnd() {
+  touchControls.isDragging = false;
+}
+
     </script>
 </body>
 </html>
