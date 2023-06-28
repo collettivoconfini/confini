@@ -21,8 +21,23 @@ h1{ font-size:3rem;}
 #festival-title {
   font-family: 'star_jedi_logo_monolineRg';
   font-size: 3rem;
+  margin-top: 3rem;
   margin-bottom: 0.5rem;
-  margin-top: 2rem;
+  position: relative;
+}
+
+#festival-title::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-image: url("lion.gif");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 100px;
+  height: 100px;
 }
 
 
