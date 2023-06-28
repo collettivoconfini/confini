@@ -50,21 +50,18 @@
 <body>
   <audio id="bgMusic" src="music.mp3" loop></audio>
 
-    <div id="divCanvas">
-        <button id="startBtn" onclick="hideStartButton()">Start Game</button>
-        <canvas id="gameCanvas" width="2000" height="1344"></canvas>
+  <div id="divCanvas" style="position: relative;">
+    <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
+    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
+    <div id="healItemContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;"></div>
+  </div>
 
-    </div>
 
-    </div>
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
-        const upBtn = document.getElementById('upBtn');
-        const downBtn = document.getElementById('downBtn');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
         const corasanImg = new Image();
         const briocheImg = new Image();
         const maryImg = new Image();
@@ -152,14 +149,14 @@
                     if (item.type === 'brioche') {
                         briocheHits++;
 
-                        if (briocheHits >= 10) {
+                        if (briocheHits >= 5) {
                             clearInterval(gameInterval);
-                            alert('Game Over! Relax raggiunto: ' + score + '\nClick "ancora" to play again.');
                             gameOver = true;
                         }
                     } else {
                         score++;
-                        console.log('Current score:', score); // Debug statement
+                        console.log('Current score:', score);
+                        console.log('brioche', briocheHits); // Debug statement
                     }
 
                     items.shift();
@@ -177,6 +174,74 @@
             }
         }
 
+        function getCanvasPosition() {
+          const canvasRect = canvas.getBoundingClientRect();
+          return { x: canvasRect.left, y: canvasRect.top };
+        }
+
+        function checkHealItemCollision(player, healItem) {
+        const playerRect = {
+          top: player.y,
+          right: player.x + player.width,
+          bottom: player.y + player.height,
+          left: player.x,
+        };
+        const healItemRect = {
+          top: parseInt(healItem.style.top),
+          right: parseInt(healItem.style.left) + healItem.width,
+          bottom: parseInt(healItem.style.top) + healItem.height,
+          left: parseInt(healItem.style.left),
+        };
+
+        return (
+          playerRect.top < healItemRect.bottom &&
+          playerRect.right > healItemRect.left &&
+          playerRect.bottom > healItemRect.top &&
+          playerRect.left < healItemRect.right
+        );
+      }
+
+
+        let isHealItemSpawned = false; // Flag to track heal item spawn
+
+        let healItem; // Define the variable outside of the spawnHealItem function
+
+        let isFirstHealItemSpawn = false;
+
+        function spawnHealItem() {
+          if (!isHealItemSpawned && score % 13 === 0 && score !== 0) {
+            console.log('Spawn heal item'); // Debug statement
+            isHealItemSpawned = true;
+
+            healItem = document.createElement("img");
+            healItem.src = "heal.gif";
+            healItem.style.position = "absolute";
+
+            const canvasRect = canvas.getBoundingClientRect();
+            const canvasWidth = canvasRect.width;
+            const canvasHeight = canvasRect.height;
+            const healItemWidth = 132;
+            const healItemHeight = 132;
+
+            const randomX = Math.floor(Math.random() * (canvasWidth - healItemWidth));
+            const randomY = Math.floor(Math.random() * (canvasHeight - healItemHeight));
+            healItem.style.left = randomX + "px";
+            healItem.style.top = randomY + "px";
+
+            canvas.parentNode.appendChild(healItem); // Append the heal item to the same parent as the canvas
+
+            setTimeout(function () {
+              if (healItem && healItem.parentNode) {
+                healItem.parentNode.removeChild(healItem);
+              }
+              isHealItemSpawned = false;
+            }, 7000);
+          }
+        }
+
+
+
+
         function checkCollision(a, b) {
             return (
                 a.x < b.x + b.width &&
@@ -187,27 +252,47 @@
         }
 
         function gameLoop() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          // Check the score and change the background map if necessary
-          if (score >= (currentLevel + 1) * 15 && currentLevel < mapImages.length - 1) {
-            currentLevel++;
-            const imageUrl = mapImages[currentLevel];
-            canvas.style.backgroundImage = `url(${imageUrl})`;
-          }
+    // Check the score and change the background map if necessary
+    if (score >= (currentLevel + 1) * 15 && currentLevel < mapImages.length - 1) {
+      currentLevel++;
+      const imageUrl = mapImages[currentLevel];
+      canvas.style.backgroundImage = `url(${imageUrl})`;
+    }
 
-          updateItems();
-          drawScore();
-          drawPlayer();
-          drawItems();
+    updateItems();
+    drawScore();
+    drawPlayer();
+    drawItems();
 
-          if (gameOver) {
-            clearInterval(gameInterval);
-            setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
-          }
-        }
+    // Check collision and remove the heal item
+    if (isHealItemSpawned && checkHealItemCollision(player, healItem)) {
+      briocheHits--;
+      console.log('ok tolto brioche');
+      healItem.parentNode.removeChild(healItem);
+      isHealItemSpawned = false;
+    }
+
+    // Spawn the heal item
+    if (isFirstHealItemSpawn) {
+      setTimeout(() => {
+        isFirstHealItemSpawn = false;
+      }, 3000); // Delay the first heal item spawn by 3 seconds
+    } else {
+      spawnHealItem();
+    }
+
+    if (gameOver) {
+      clearInterval(gameInterval);
+      setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
+    }
+  }
+
+
 
         function startGame() {
+          isFirstHealItemSpawn = true;
           currentLevel = 0;
           score = 0;
           briocheHits = 0;
@@ -220,6 +305,8 @@
           gameInterval = setInterval(gameLoop, 1000 / 60);
           bgMusic.play();
            setInterval(spawnItems, 1000);//Start spawning items immediately
+           setInterval(spawnHealItem, 1000); // Start spawning heal items immediately
+
         }
 
         function hideStartButton() {
@@ -247,17 +334,17 @@
           gameOverScreen.style.alignItems = 'center';
           gameOverScreen.style.color = 'white';
           gameOverScreen.style.fontSize = '48px';
-          gameOverScreen.innerText = 'Game Over! Relax raggiunto: ' + score + '\nClick "ancora" to play again.';
+          gameOverScreen.innerText = 'Game Over! Relax raggiunto: ' + score + '\nClicca ancora per insistere.';
           document.body.appendChild(gameOverScreen);
 
           const restartBtn = document.createElement('button');
           restartBtn.style.fontSize = '24px';
           restartBtn.style.padding = '10px 20px';
           restartBtn.style.marginTop = '20px';
-          restartBtn.innerText = 'Ancora';
+          restartBtn.innerText = 'ANCORAH';
           restartBtn.addEventListener('click', () => {
             document.body.removeChild(gameOverScreen);
-            startGame();
+            window.location.reload();
           });
           gameOverScreen.appendChild(restartBtn);
         }
