@@ -85,9 +85,9 @@
         const player = {
             x: canvas.width / 2,
             y: canvas.height / 2,
-            width: 259 / 3,
-            height: 194 / 3,
-            speed: 5,
+            width: 259,
+            height: 294,
+            speed: 10,
         };
 
         const items = [];
@@ -122,7 +122,7 @@
         }
 
         function drawScore() {
-          ctx.font = '200px Arial';
+          ctx.font = '100px Arial';
           ctx.fillStyle = 'yellow';
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
@@ -135,7 +135,7 @@
             const y = -30;
             const speedX = (Math.random() * 2 - 1) * 2;
             const speedY = Math.random() * 2 + 1;
-            const item = { type, x, y, width: 30, height: 30, speedX, speedY };
+            const item = { type, x, y, width: 90, height: 90, speedX, speedY };
             items.push(item);
         }
 
