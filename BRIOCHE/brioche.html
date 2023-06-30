@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corasan Game</title>
+    <title>Brioche per Corasan</title>
     <style>
         body {
              background-color: red;
@@ -53,10 +53,6 @@
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
     <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
-    <div id="healItemContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;"></div>
-  </div>
-
-
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -65,12 +61,15 @@
         const corasanImg = new Image();
         const briocheImg = new Image();
         const maryImg = new Image();
+        const healImg = new Image();
+
         const mapImages = ['map.jpg', 'map2.jpg', 'map3.jpg', 'map4.jpg', 'map5.jpg', 'map6.jpg', 'map7.jpg', 'map8.jpg'];
 
 
         corasanImg.src = 'corasan.png';
         briocheImg.src = 'brioche.png';
         maryImg.src = 'mary.jpg';
+        healImg.src = 'heal.gif';
 
         let gameInterval;
         let score = 0;
@@ -89,30 +88,81 @@
 
         const items = [];
 
+        let movement = {
+          ArrowUp: false,
+          ArrowDown: false,
+          ArrowLeft: false,
+          ArrowRight: false
+        };
+
+        let currentDirection = null;
+
         document.addEventListener('keydown', (event) => {
           switch (event.key) {
-              case 'ArrowUp':
-                  if (player.y > 0) {
-                      player.y -= player.speed;
-                  }
-                  break;
-              case 'ArrowDown':
-                  if (player.y < canvas.height - player.height) {
-                      player.y += player.speed;
-                  }
-                  break;
-              case 'ArrowLeft':
-                  if (player.x > 0) {
-                      player.x -= player.speed;
-                  }
-                  break;
-              case 'ArrowRight':
-                  if (player.x < canvas.width - player.width) {
-                      player.x += player.speed;
-                  }
-                  break;
+            case 'ArrowUp':
+              movement.ArrowUp = true;
+              currentDirection = 'up';
+              break;
+            case 'ArrowDown':
+              movement.ArrowDown = true;
+              currentDirection = 'down';
+              break;
+            case 'ArrowLeft':
+              movement.ArrowLeft = true;
+              currentDirection = 'left';
+              break;
+            case 'ArrowRight':
+              movement.ArrowRight = true;
+              currentDirection = 'right';
+              break;
           }
         });
+
+        document.addEventListener('keyup', (event) => {
+          switch (event.key) {
+            case 'ArrowUp':
+              movement.ArrowUp = false;
+              break;
+            case 'ArrowDown':
+              movement.ArrowDown = false;
+              break;
+            case 'ArrowLeft':
+              movement.ArrowLeft = false;
+              break;
+            case 'ArrowRight':
+              movement.ArrowRight = false;
+              break;
+          }
+        });
+
+        function updatePlayerPosition() {
+          if (movement.ArrowUp) {
+            currentDirection = 'up';
+          }
+          if (movement.ArrowDown) {
+            currentDirection = 'down';
+          }
+          if (movement.ArrowLeft) {
+            currentDirection = 'left';
+          }
+          if (movement.ArrowRight) {
+            currentDirection = 'right';
+          }
+
+          if (currentDirection === 'up' && player.y > 0) {
+            player.y -= player.speed;
+          }
+          if (currentDirection === 'down' && player.y < canvas.height - player.height) {
+            player.y += player.speed;
+          }
+          if (currentDirection === 'left' && player.x > 0) {
+            player.x -= player.speed;
+          }
+          if (currentDirection === 'right' && player.x < canvas.width - player.width) {
+            player.x += player.speed;
+          }
+        }
+
 
         function drawPlayer() {
             ctx.drawImage(corasanImg, player.x, player.y, player.width, player.height);
@@ -124,6 +174,8 @@
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
           ctx.fillText('Relax: ' + score, centerX, centerY);
+          ctx.fillText('Ciccia: ' + briocheHits, centerX+50, centerY+50);
+
         }
 
         function spawnItems() {
@@ -136,110 +188,80 @@
             items.push(item);
         }
 
-        function updateItems() {
-            for (const item of items) {
-                item.x += item.speedX;
-                item.y += item.speedY;
+        function healItem() {
+        const existingHealItem = items.find(item => item.type === 'heal.gif');
 
-                if (item.y > canvas.height) {
-                    items.shift();
-                }
+        if (!existingHealItem && score > 0 && score % 13 === 0) {
+          const type = 'heal.gif'; // Replace 'heal.gif' with the actual filename of your heal image
+          const x = Math.random() * (canvas.width - 90);
+          const y = Math.random() * (canvas.height - 90);
+          const item = { type, x, y, width: 290, height: 290, speedX: 0, speedY: 0 };
+          items.push(item);
 
-                if (checkCollision(item, player)) {
-                    if (item.type === 'brioche') {
-                        briocheHits++;
-
-                        if (briocheHits >= 5) {
-                            clearInterval(gameInterval);
-                            gameOver = true;
-                        }
-                    } else {
-                        score++;
-                        console.log('Current score:', score);
-                        console.log('brioche', briocheHits); // Debug statement
-                    }
-
-                    items.shift();
-                }
+          setTimeout(() => {
+            const index = items.indexOf(item);
+            if (index !== -1) {
+              items.splice(index, 1);
             }
+          }, 7000);
         }
+      }
 
-        function drawItems() {
-            for (const item of items) {
-                if (item.type === 'brioche') {
-                    ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
-                } else {
-                    ctx.drawImage(maryImg, item.x, item.y, item.width, item.height);
-                }
-            }
-        }
+
+
+function updateItems() {
+for (let i = items.length - 1; i >= 0; i--) {
+const item = items[i];
+item.x += item.speedX;
+item.y += item.speedY;
+
+if (item.y > canvas.height) {
+items.splice(i, 1);
+}
+
+if (checkCollision(item, player)) {
+if (item.type === 'brioche') {
+  briocheHits++;
+
+  if (briocheHits >= 20) {
+    clearInterval(gameInterval);
+    gameOver = true;
+  }
+} else if (item.type === 'heal.gif') {
+  briocheHits--;
+  console.log('heal', briocheHits);
+  if (briocheHits < 0) {
+    briocheHits = 0;
+  }
+} else {
+  score++;
+  console.log('Current score:', score);
+  console.log('brioche', briocheHits); // Debug statement
+}
+
+items.splice(i, 1);
+}
+}
+}
+
+
+function drawItems() {
+  for (const item of items) {
+    if (item.type === 'brioche') {
+      ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
+    } else if (item.type === 'heal.gif') {
+      ctx.drawImage(healImg, item.x, item.y, item.width, item.height);
+    } else {
+      ctx.drawImage(maryImg, item.x, item.y, item.width, item.height);
+    }
+  }
+}
+
 
         function getCanvasPosition() {
           const canvasRect = canvas.getBoundingClientRect();
           return { x: canvasRect.left, y: canvasRect.top };
         }
-
-        function checkHealItemCollision(player, healItem) {
-        const playerRect = {
-          top: player.y,
-          right: player.x + player.width,
-          bottom: player.y + player.height,
-          left: player.x,
-        };
-        const healItemRect = {
-          top: parseInt(healItem.style.top),
-          right: parseInt(healItem.style.left) + healItem.width,
-          bottom: parseInt(healItem.style.top) + healItem.height,
-          left: parseInt(healItem.style.left),
-        };
-
-        return (
-          playerRect.top < healItemRect.bottom &&
-          playerRect.right > healItemRect.left &&
-          playerRect.bottom > healItemRect.top &&
-          playerRect.left < healItemRect.right
-        );
-      }
-
-
-        let isHealItemSpawned = false; // Flag to track heal item spawn
-
-        let healItem; // Define the variable outside of the spawnHealItem function
-
-        let isFirstHealItemSpawn = false;
-
-        function spawnHealItem() {
-          if (!isHealItemSpawned && score % 13 === 0 && score !== 0) {
-            console.log('Spawn heal item'); // Debug statement
-            isHealItemSpawned = true;
-
-            healItem = document.createElement("img");
-            healItem.src = "heal.gif";
-            healItem.style.position = "absolute";
-
-            const canvasRect = canvas.getBoundingClientRect();
-            const canvasWidth = canvasRect.width;
-            const canvasHeight = canvasRect.height;
-            const healItemWidth = 132;
-            const healItemHeight = 132;
-
-            const randomX = Math.floor(Math.random() * (canvasWidth - healItemWidth));
-            const randomY = Math.floor(Math.random() * (canvasHeight - healItemHeight));
-            healItem.style.left = randomX + "px";
-            healItem.style.top = randomY + "px";
-
-            canvas.parentNode.appendChild(healItem); // Append the heal item to the same parent as the canvas
-
-            setTimeout(function () {
-              if (healItem && healItem.parentNode) {
-                healItem.parentNode.removeChild(healItem);
-              }
-              isHealItemSpawned = false;
-            }, 7000);
-          }
-        }
-
-
 
 
         function checkCollision(a, b) {
@@ -260,28 +282,12 @@
       const imageUrl = mapImages[currentLevel];
       canvas.style.backgroundImage = `url(${imageUrl})`;
     }
-
+    updatePlayerPosition();
     updateItems();
     drawScore();
     drawPlayer();
     drawItems();
-
-    // Check collision and remove the heal item
-    if (isHealItemSpawned && checkHealItemCollision(player, healItem)) {
-      briocheHits--;
-      console.log('ok tolto brioche');
-      healItem.parentNode.removeChild(healItem);
-      isHealItemSpawned = false;
-    }
-
-    // Spawn the heal item
-    if (isFirstHealItemSpawn) {
-      setTimeout(() => {
-        isFirstHealItemSpawn = false;
-      }, 3000); // Delay the first heal item spawn by 3 seconds
-    } else {
-      spawnHealItem();
-    }
+    healItem();
 
     if (gameOver) {
       clearInterval(gameInterval);
@@ -305,8 +311,6 @@
           gameInterval = setInterval(gameLoop, 1000 / 60);
           bgMusic.play();
            setInterval(spawnItems, 1000);//Start spawning items immediately
-           setInterval(spawnHealItem, 1000); // Start spawning heal items immediately
-
         }
 
         function hideStartButton() {
