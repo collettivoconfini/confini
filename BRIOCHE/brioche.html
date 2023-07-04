@@ -10,19 +10,22 @@
         }
 
         #divCanvas {
-          display: flex;
-          justify-content: center;
-        }
-        canvas {
-        background-image: url('map.jpg');
-         background-size: cover;
-         display: flex;
-         justify-content: center;
-         align-items: center;
-         height: 100vh;
-         margin: 0;
-            border: 10px solid black;
-        }
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      border: 10px solid black;
+      background-image: url('map.png');
+
+    }
+
+
         #controls {
             position: fixed;
             bottom: 10px;
@@ -45,6 +48,18 @@
     font-size: 24px;
     padding: 10px 20px;
 }
+
+
+.corasanCSS {
+  position: absolute;
+  top: -26px;
+  left: -156px;
+  width: 46px; /* Width of a single sprite image */
+  height: 50px; /* Height of a single sprite image */
+  background-image: url('corasanFile.png');
+  background-repeat: no-repeat;
+}
+
     </style>
 </head>
 <body>
@@ -52,30 +67,63 @@
 
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
-    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
+    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;">
+      <div class="debugCorasan">
+    <div class="corasanCSS"></div>
+  </div>
+  </canvas>
+
+
+</div>
+
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
-        const corasanImg = new Image();
         const briocheImg = new Image();
         const maryImg = new Image();
         const healImg = new Image();
+        const corasanImg = new Image();
 
-        const mapImages = ['map.jpg', 'map2.jpg', 'map3.jpg', 'map4.jpg', 'map5.jpg', 'map6.jpg', 'map7.jpg', 'map8.jpg'];
-
-
-        corasanImg.src = 'corasan.png';
+        let img = new Image();
+        img.src = "maps.png";
         briocheImg.src = 'brioche.png';
         maryImg.src = 'mary.jpg';
         healImg.src = 'heal.gif';
+        corasanImg.src ='corasanFile.png'
 
         let gameInterval;
         let score = 0;
         let gameOver = false;
         let briocheHits = 0;
         let currentLevel = 0;
+        let imgWidth;
+        let scrollSpeed = 2;
+        let xPos = 0;
+
+        img.onload = function () {
+  imgWidth = this.width;
+};
+
+function renderBackground() {
+  // Draw the first copy of the image
+  ctx.drawImage(img, xPos, 0, imgWidth, canvas.height);
+
+  // Draw the second copy of the image, flipped on the x-axis
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(img, -xPos - imgWidth * 2, 0, imgWidth, canvas.height);
+  ctx.restore();
+
+  // Update the x position
+  xPos -= scrollSpeed;
+
+  // Reset the x position when reaching the end of the image
+  if (xPos <= -imgWidth) {
+    xPos = 0;
+  }
+}
 
 
         const player = {
@@ -83,8 +131,10 @@
             y: canvas.height / 2,
             width: 259,
             height: 294,
-            speed: 10,
+            speed: 20,
         };
+
+
 
         const items = [];
 
@@ -96,6 +146,8 @@
         };
 
         let currentDirection = null;
+
+
 
         document.addEventListener('keydown', (event) => {
           switch (event.key) {
@@ -163,10 +215,42 @@
           }
         }
 
+        function corasanAnimazione(frame) {
+                   const sprite = document.querySelector('.corasanCSS');
+                   const offsetXValues = [-26, -104, -165, -239, -317, -378]; // offsetX values for each sprite
+                   const frameHeight = 50; // Height of a single sprite image
 
-        function drawPlayer() {
-            ctx.drawImage(corasanImg, player.x, player.y, player.width, player.height);
-        }
+                   const offsetX = offsetXValues[frame];
+                   const offsetY = 0;
+                   sprite.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
+                 }
+
+                 function drawPlayer() {
+                    const frameDuration = 3000; // Delay between frame changes in milliseconds (e.g., 200ms)
+                    const totalFrames = 6; // Number of frames in the sprite animation
+                    const frame = Math.floor(Date.now() / frameDuration) % totalFrames;
+                    const frameWidth = 40; // Width of a single sprite image
+                    const frameHeight = 49; // Height of a single sprite image
+                    const offsetX = frameWidth * frame;
+                    const offsetY = 0;
+                    // Rest of your code...
+
+
+            ctx.drawImage(
+              corasanImg,
+              offsetX,
+              offsetY,
+              frameWidth,
+              frameHeight,
+              player.x,
+              player.y,
+              player.width,
+              player.height
+            );
+          }
+
+
+
 
         function drawScore() {
           ctx.font = '100px Arial';
@@ -273,57 +357,57 @@ function drawItems() {
             );
         }
 
-        function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Check the score and change the background map if necessary
-    if (score >= (currentLevel + 1) * 15 && currentLevel < mapImages.length - 1) {
-      currentLevel++;
-      const imageUrl = mapImages[currentLevel];
-      canvas.style.backgroundImage = `url(${imageUrl})`;
-    }
-    updatePlayerPosition();
-    updateItems();
-    drawScore();
-    drawPlayer();
-    drawItems();
-    healItem();
+      let flipHorizontal = false;
+      let flipInterval = 1000; // Initialize the flip interval
+      let lastFlipTime = 0;
 
-    if (gameOver) {
-      clearInterval(gameInterval);
-      setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
-    }
-  }
+      function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        renderBackground();
 
+        corasanAnimazione(0);
+        updatePlayerPosition();
+        updateItems();
+        drawScore();
+        drawPlayer();
+        drawItems();
+        healItem();
+        requestAnimationFrame(gameLoop);
 
+        if (gameOver) {
+          clearInterval(gameInterval);
+          setTimeout(showGameOverScreen, 1000); // Display game over screen after a 2-second delay
+        }
+      }
 
-        function startGame() {
-          isFirstHealItemSpawn = true;
-          currentLevel = 0;
-          score = 0;
-          briocheHits = 0;
-          gameOver = false;
-
-          if (gameInterval) {
-            clearInterval(gameInterval);
+       function hideStartButton() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.style.display = 'none';
           }
 
-          gameInterval = setInterval(gameLoop, 1000 / 60);
-          bgMusic.play();
-           setInterval(spawnItems, 1000);//Start spawning items immediately
-        }
 
-        function hideStartButton() {
-          const startBtn = document.getElementById('startBtn');
-          startBtn.style.display = 'none';
-        }
+      function startGame() {
+        isFirstHealItemSpawn = true;
+        currentLevel = 0;
+        score = 0;
+        briocheHits = 0;
+        gameOver = false;
 
-        startBtn.addEventListener('click', () => {
-          if (!gameOver) {
-            bgMusic.pause();
-            startGame();
-          }
-        });
+        gameLoop();
+        bgMusic.play();
+        setInterval(spawnItems, 1000); // Start spawning items immediately
+      }
+
+     startBtn.addEventListener('click', () => {
+       if (!gameOver) {
+         bgMusic.pause();
+         flipInterval = 500;
+         startGame();
+       }
+     });
+
+        //WHAT HAPPENS AFTER A SUCCESFUL GAME OVER
 
         function showGameOverScreen() {
           const gameOverScreen = document.createElement('div');
@@ -352,6 +436,8 @@ function drawItems() {
           });
           gameOverScreen.appendChild(restartBtn);
         }
+
+
 
         //MOBILE TOUCH IMPLEMENTATION
 
