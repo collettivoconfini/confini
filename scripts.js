@@ -210,6 +210,35 @@ const guests = document.getElementById("guests");
 //this should have next to the phrase "+guests" appear from nothing and then disappear slowly the phrase ""
 
 
-//DISCLAIMER ANIMAZIONE
-const disclaimer = document.getElementsByClassName("disclaimer-container");
+function typeWriter(element, text, interval, callback) {
+  let index = 0;
+
+  function type() {
+    if (index < text.length) {
+      if (text.substr(index, 4) === '<br>') {
+        element.innerHTML += '<br>';
+        index += 4;
+      } else {
+        element.innerHTML += text.charAt(index);
+        index++;
+      }
+      setTimeout(type, interval);
+    } else {
+      setTimeout(() => {
+        element.innerHTML = '';
+        index = 0;
+        type();
+      }, 2000);
+    }
+  }
+
+  type();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.querySelector('.disclaimer-container p');
+  const text = container.innerHTML;
+  container.innerHTML = ''; // Clear the original text
+  typeWriter(container, text, 100);
+});
 //here
