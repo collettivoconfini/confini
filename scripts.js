@@ -19,22 +19,6 @@ const title = document.querySelector("#festival-title");
 // Start with a white color
 title.style.color = "white";
 
-//ANIMAZIONE SFONDO
-const images = [
-  "immagini/cornice.gif",
-  "immagini/corniceR.gif",
-  "immagini/corniceL.gif"
-];
-
-let currentIndex = 0;
-
-function changeBackground() {
-  document.body.style.backgroundImage = `url("${images[currentIndex]}")`;
-  currentIndex = (currentIndex + 1) % images.length;
-}
-
-setInterval(changeBackground, 5000);
-
 
 // Set up the animation interval for title
 setInterval(function() {
@@ -63,7 +47,7 @@ title.style.textShadow = "1px 1px 1px rgba(0,0,0,0.5)";
 
 // ANIMAZIONE DELLA scaletta
 const scaletta = document.getElementById("lineup");
-const texts = ['questa è la scaletta:', 'dal vivo'];
+const texts = ['questa è tipo l\'idea di scaletta', 'questa è abbastanza la prima serata'];
 let lineupIndex = 0;
 
 setInterval(function() {
@@ -74,8 +58,8 @@ setInterval(function() {
 // ANIMAZIONE di carlo
 const marlo = document.getElementById("carlo");
 const carloTexts = [
-  '00:00 / 00:30 <a href="https://carlomartinellis.github.io/magiche.html">CARLO MARTINELLI</a> (post-punk/boxe con il pubblico)',
-  '00:00 / 00:30 <a href="https://carlomartinellis.github.io/magiche.html">MARLO CARTINELLI</a> (post-punk/boxe con il pubblico)'
+  '<a href="https://carlomartinellis.github.io/magiche.html">CARLO MARTINELLI</a> (post-punk/boxe con il pubblico)',
+  '<a href="https://carlomartinellis.github.io/magiche.html">MARLO CARTINELLI</a> (post-punk/boxe con il pubblico)'
 ];
 let carloIndex = 0;
 
@@ -89,8 +73,8 @@ setInterval(function() {
 // ANIMAZIONE di CORASAN
 const corasao = document.getElementById("corasan");
 const corasanTexts = [
-  '<span>23:00 / 23:30 <a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (emo/metal/noise)</span>',
-  '<span>23:00 / 23:30 <a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (60\'s, pop/brioche)</span>'
+  '<span><a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (emo/metal/noise)</span>',
+  '<span><a href="https://open.spotify.com/artist/5WlSn0lTNFNFkTggDOyRs7">CORASAN</a> (60\'s, pop/brioche)</span>'
 ];
 let corasaoIndex = 0;
 
@@ -116,7 +100,7 @@ const magaze = document.getElementById("magaze");
 const suonanoForteText = "SUONANO FORTE";
 const suonanoForteSize = "1em";
 const suonanoForteColor = "red";
-const magazeText = '23:30 / 00:00 <a href="https://magaze.bandcamp.com/track/estate">MAGAZE</a> (post-punk/rock/cantautorato)';
+const magazeText = '<a href="https://magaze.bandcamp.com/track/estate">MAGAZE</a> (post-punk/rock/cantautorato)';
 
 // Create a CSS animation for the "SUONANO FORTE" transition
 const suonanoForteAnimationStyle = `
@@ -177,8 +161,8 @@ magaze.style.color = suonanoForteColor;
 // ANIMAZIONE di mARCELLO
 const marcello = document.getElementById("jason");
 const MARCELLOTexts = [
-  '22:30 / 23:00 <a href="https://rosnama-tammat.web.app/">JASON LA MECCA (MISTO MAME)</a>',
-  '22:30 / 23:00 <a href="https://rosnama-tammat.web.app/">JASON LA MECCA (RISTO MARE)</a>'
+  '<a href="https://rosnama-tammat.web.app/">JASON LA MECCA (MISTO MAME)</a>',
+  '<a href="https://rosnama-tammat.web.app/">JASON LA MECCA (RISTO MARE)</a>'
 ];
 let marcelloIndex = 0;
 
