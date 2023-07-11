@@ -171,9 +171,24 @@ sourceHeight: 0,
     requestAnimationFrame(() => animateCharacter(player));
   }
   function drawPlayer() {
+  ctx.save();
+  ctx.translate(player.x, player.y);
 
-    ctx.save();
-    ctx.translate(player.x, player.y);
+  // Check the current direction and flip the sprite accordingly
+  if (currentDirection === 'left') {
+    ctx.scale(-1, 1);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      -player.width, // Adjust the x position when flipped
+      0,
+      player.width,
+      player.height
+    );
+  } else {
     ctx.drawImage(
       spriteSheet,
       player.sourceX,
@@ -185,8 +200,10 @@ sourceHeight: 0,
       player.width,
       player.height
     );
-    ctx.restore();
   }
+
+  ctx.restore();
+}
 
 
 
