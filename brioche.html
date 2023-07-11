@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brioche per Corasan</title>
+    <style>
+        body {
+             background-color: red;
+        }
+
+        #divCanvas {
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      border: 10px solid black;
+      background-image: url("map.png");
+
+    }
+
+
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #controls > div {
+            display: flex;
+        }
+        button {
+            margin: 5px;
+        }
+        #startBtn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    padding: 10px 20px;
+}
+
+
+
+    </style>
+</head>
+<body>
+  <audio id="bgMusic" src="music.mp3" loop></audio>
+
+  <div id="divCanvas" style="position: relative;">
+    <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
+    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
+  </div>
+
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const briocheImg = new Image();
+        const maryImg = new Image();
+        const healImg = new Image();
+        const corasanImg = new Image();
+        const spriteSheet = new Image();
+
+  spriteSheet.onerror = function(event) {
+    console.error('Error loading the sprite sheet image:', event);
+  };
+
+  spriteSheet.src = 'shadow_dog.png';
+        const spriteData = [
+{ x: -21, y: -542, width: 498, height: 496 },
+{ x: -597, y: -538, width: 497, height: 498 },
+{ x: -1173, y: -535, width: 496, height: 498 },
+{ x: -1749, y: -531, width: 494, height: 499 },
+{ x: -2323, y: -535, width: 496, height: 498 },
+{ x: -2899, y: -537, width: 496, height: 498 }, // Update sprite6 coordinates
+];
+
+        let img = new Image();
+        img.src = "maps.png";
+        briocheImg.src = 'brioche.png';
+        maryImg.src = 'mary.jpg';
+        healImg.src = 'heal.gif';
+
+        let gameInterval;
+        let score = 0;
+        let gameOver = false;
+        let briocheHits = 0;
+        let currentLevel = 0;
+        let imgWidth;
+        let scrollSpeed = 2;
+        let xPos = 0;
+
+        img.onload = function () {
+  imgWidth = this.width;
+};
+
+function renderBackground() {
+  // Draw the first copy of the image
+  ctx.drawImage(img, xPos, 0, imgWidth, canvas.height);
+
+  // Draw the second copy of the image, flipped on the x-axis
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(img, -xPos - imgWidth * 2, 0, imgWidth, canvas.height);
+  ctx.restore();
+
+  // Update the x position
+  xPos -= scrollSpeed;
+
+  // Reset the x position when reaching the end of the image
+  if (xPos <= -imgWidth) {
+    xPos = 0;
+  }
+}
+
+
+const player = {
+x: canvas.width / 2,
+y: canvas.height / 2,
+width: 259,
+height: 294,
+speed: 20,
+sourceX: 0,
+sourceY: 0,
+sourceWidth: 0,
+sourceHeight: 0,
+};
+
+
+
+        function setSprite(spriteIndex) {
+        const sprite = spriteData[spriteIndex];
+        player.sourceX = sprite.x;
+        player.sourceY = sprite.y;
+        player.sourceWidth = sprite.width;
+        player.sourceHeight = sprite.height;
+      }
+  let currentSprite = 0;
+  const animationDuration = 800; // Adjust this value to change the animation speed
+
+  function animateCharacter(player) {
+    console.log('Animating character with currentSprite:', currentSprite);
+    setSprite(currentSprite);
+    currentSprite = (currentSprite + 1) % spriteData.length;
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      0,
+      0,
+      player.width,
+      player.height
+    );
+    ctx.restore();
+
+    requestAnimationFrame(() => animateCharacter(player));
+  }
+  function drawPlayer() {
+    console.log('drawPlayer called')
+    console.log('Drawing player with spriteSheet:', spriteSheet);
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      0,
+      0,
+      player.width,
+      player.height
+    );
+    ctx.restore();
+  }
+
+
+
+
+
+        const items = [];
+
+        let movement = {
+          ArrowUp: false,
+          ArrowDown: false,
+          ArrowLeft: false,
+          ArrowRight: false
+        };
+
+        let currentDirection = null;
+
+
+
+        document.addEventListener('keydown', (event) => {
+          switch (event.key) {
+            case 'ArrowUp':
+              movement.ArrowUp = true;
+              currentDirection = 'up';
+              break;
+            case 'ArrowDown':
+              movement.ArrowDown = true;
+              currentDirection = 'down';
+              break;
+            case 'ArrowLeft':
+              movement.ArrowLeft = true;
+              currentDirection = 'left';
+              break;
+            case 'ArrowRight':
+              movement.ArrowRight = true;
+              currentDirection = 'right';
+              break;
+          }
+        });
+
+        document.addEventListener('keyup', (event) => {
+          switch (event.key) {
+            case 'ArrowUp':
+              movement.ArrowUp = false;
+              break;
+            case 'ArrowDown':
+              movement.ArrowDown = false;
+              break;
+            case 'ArrowLeft':
+              movement.ArrowLeft = false;
+              break;
+            case 'ArrowRight':
+              movement.ArrowRight = false;
+              break;
+          }
+        });
+
+        function updatePlayerPosition() {
+          if (movement.ArrowUp) {
+            currentDirection = 'up';
+          }
+          if (movement.ArrowDown) {
+            currentDirection = 'down';
+          }
+          if (movement.ArrowLeft) {
+            currentDirection = 'left';
+          }
+          if (movement.ArrowRight) {
+            currentDirection = 'right';
+          }
+
+          if (currentDirection === 'up' && player.y > 0) {
+            player.y -= player.speed;
+          }
+          if (currentDirection === 'down' && player.y < canvas.height - player.height) {
+            player.y += player.speed;
+          }
+          if (currentDirection === 'left' && player.x > 0) {
+            player.x -= player.speed;
+          }
+          if (currentDirection === 'right' && player.x < canvas.width - player.width) {
+            player.x += player.speed;
+          }
+        }
+
+
+
+
+
+
+
+        function drawScore() {
+          ctx.font = '100px Arial';
+          ctx.fillStyle = 'yellow';
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          ctx.fillText('Relax: ' + score, centerX, centerY);
+          ctx.fillText('Ciccia: ' + briocheHits, centerX+50, centerY+50);
+
+        }
+
+        function spawnItems() {
+            const type = Math.random() < 0.5 ? 'brioche' : 'mary';
+            const x = Math.random() * (canvas.width - 30);
+            const y = -30;
+            const speedX = (Math.random() * 2 - 1) * 2;
+            const speedY = Math.random() * 2 + 1;
+            const item = { type, x, y, width: 90, height: 90, speedX, speedY };
+            items.push(item);
+        }
+
+        function healItem() {
+        const existingHealItem = items.find(item => item.type === 'heal.gif');
+
+        if (!existingHealItem && score > 0 && score % 13 === 0) {
+          const type = 'heal.gif'; // Replace 'heal.gif' with the actual filename of your heal image
+          const x = Math.random() * (canvas.width - 90);
+          const y = Math.random() * (canvas.height - 90);
+          const item = { type, x, y, width: 290, height: 290, speedX: 0, speedY: 0 };
+          items.push(item);
+
+          setTimeout(() => {
+            const index = items.indexOf(item);
+            if (index !== -1) {
+              items.splice(index, 1);
+            }
+          }, 7000);
+        }
+      }
+
+
+
+function updateItems() {
+for (let i = items.length - 1; i >= 0; i--) {
+const item = items[i];
+item.x += item.speedX;
+item.y += item.speedY;
+
+if (item.y > canvas.height) {
+items.splice(i, 1);
+}
+
+if (checkCollision(item, player)) {
+if (item.type === 'brioche') {
+  briocheHits++;
+
+  if (briocheHits >= 20) {
+    clearInterval(gameInterval);
+    gameOver = true;
+  }
+} else if (item.type === 'heal.gif') {
+  briocheHits--;
+  console.log('heal', briocheHits);
+  if (briocheHits < 0) {
+    briocheHits = 0;
+  }
+} else {
+  score++;
+  console.log('Current score:', score);
+  console.log('brioche', briocheHits); // Debug statement
+}
+
+items.splice(i, 1);
+}
+}
+}
+
+
+function drawItems() {
+  for (const item of items) {
+    if (item.type === 'brioche') {
+      ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
+    } else if (item.type === 'heal.gif') {
+      ctx.drawImage(healImg, item.x, item.y, item.width, item.height);
+    } else {
+      ctx.drawImage(maryImg, item.x, item.y, item.width, item.height);
+    }
+  }
+}
+
+
+        function getCanvasPosition() {
+          const canvasRect = canvas.getBoundingClientRect();
+          return { x: canvasRect.left, y: canvasRect.top };
+        }
+
+
+        function checkCollision(a, b) {
+            return (
+                a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y
+            );
+        }
+
+
+      let flipHorizontal = false;
+      let flipInterval = 1000; // Initialize the flip interval
+      let lastFlipTime = 0;
+
+      function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    renderBackground();
+    // I Removed the animateCharacter(player) call from here to debug, the rectangle draws fine anyway the image not
+    updatePlayerPosition();
+    updateItems();
+    drawScore();
+    drawItems();
+    healItem();
+    drawPlayer();
+    requestAnimationFrame(gameLoop);
+
+        if (gameOver) {
+          clearInterval(gameInterval);
+          setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
+        }
+      }
+
+       function hideStartButton() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.style.display = 'none';
+          }
+
+
+      function startGame() {
+        isFirstHealItemSpawn = true;
+        currentLevel = 0;
+        score = 0;
+        briocheHits = 0;
+        gameOver = false;
+        animateCharacter(player); // Call animateCharacter once before starting the game loop
+        gameLoop();
+        bgMusic.play();
+        setInterval(spawnItems, 1000); // Start spawning items immediately
+      }
+
+     startBtn.addEventListener('click', () => {
+       if (!gameOver) {
+         bgMusic.pause();
+         flipInterval = 500;
+         startGame();
+       }
+     });
+
+        //WHAT HAPPENS AFTER A SUCCESFUL GAME OVER
+
+        function showGameOverScreen() {
+          const gameOverScreen = document.createElement('div');
+          gameOverScreen.style.position = 'absolute';
+          gameOverScreen.style.top = '0';
+          gameOverScreen.style.left = '0';
+          gameOverScreen.style.width = '100%';
+          gameOverScreen.style.height = '100%';
+          gameOverScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+          gameOverScreen.style.display = 'flex';
+          gameOverScreen.style.justifyContent = 'center';
+          gameOverScreen.style.alignItems = 'center';
+          gameOverScreen.style.color = 'white';
+          gameOverScreen.style.fontSize = '48px';
+          gameOverScreen.innerText = 'Game Over! Relax raggiunto: ' + score + '\nClicca ancora per insistere.';
+          document.body.appendChild(gameOverScreen);
+
+          const restartBtn = document.createElement('button');
+          restartBtn.style.fontSize = '24px';
+          restartBtn.style.padding = '10px 20px';
+          restartBtn.style.marginTop = '20px';
+          restartBtn.innerText = 'ANCORAH';
+          restartBtn.addEventListener('click', () => {
+            document.body.removeChild(gameOverScreen);
+            window.location.reload();
+          });
+          gameOverScreen.appendChild(restartBtn);
+        }
+
+
+
+        //MOBILE TOUCH IMPLEMENTATION
+
+        const touchControls = {
+          startX: 0,
+          startY: 0,
+          isDragging: false,
+        };
+
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchend', handleTouchEnd);
+
+        function handleTouchStart(event) {
+          if (event.touches.length === 1) {
+            const touch = event.touches[0];
+            touchControls.startX = touch.clientX;
+            touchControls.startY = touch.clientY;
+            touchControls.isDragging = true;
+          }
+        }
+
+        function handleTouchMove(event) {
+          if (touchControls.isDragging) {
+            event.preventDefault(); // Prevent scrolling while dragging on mobile
+
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - touchControls.startX;
+            const deltaY = touch.clientY - touchControls.startY;
+
+            // Adjust player position based on touch movement
+            player.x += deltaX;
+            player.y += deltaY;
+
+            // Update start position for the next move
+            touchControls.startX = touch.clientX;
+            touchControls.startY = touch.clientY;
+          }
+        }
+
+        function handleTouchEnd() {
+          touchControls.isDragging = false;
+        }
+
+
+
+    </script>
+</body>
+</html>
