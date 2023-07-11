@@ -77,14 +77,41 @@
   };
 
   spriteSheet.src = 'shadow_dog.png';
-        const spriteData = [
-{ x: -21, y: -542, width: 498, height: 496 },
-{ x: -597, y: -538, width: 497, height: 498 },
-{ x: -1173, y: -535, width: 496, height: 498 },
-{ x: -1749, y: -531, width: 494, height: 499 },
-{ x: -2323, y: -535, width: 496, height: 498 },
-{ x: -2899, y: -537, width: 496, height: 498 }, // Update sprite6 coordinates
+  const spriteData = [
+  // Row 1
+  [
+    { x: 40, y: 59, width: 496, height: 462 },
+    { x: 623, y: 60, width: 497, height: 462 },
+    { x: 1208, y: 61, width: 496, height: 462 },
+    { x: 1793, y: 62, width: 494, height: 462 },
+    { x: 2358, y: 61, width: 496, height: 462 },
+    { x: 2923, y: 60, width: 496, height: 462 },
+  ],
+  // Row 2 (smokingSheet)
+  [
+    { x: 21, y: 542, width: 498, height: 496 },
+    { x: 597, y: 538, width: 497, height: 498 },
+    { x: 1173, y: 535, width: 496, height: 498 },
+    { x: 1749, y: 531, width: 496, height: 499 },
+    { x: 2323, y: 535, width: 494, height: 498 },
+    { x: 2923, y: 60, width: 494, height: 499 },
+  ],
+// Row3 (CicciaSheet)
+[
+    { x: 65, y: 1120, width: 498, height: 496 },
+    { x: 638, y: 1120, width: 497, height: 498 },
+    { x: 1211, y: 1119, width: 496, height: 498 },
+    { x: 1784, y: 1118, width: 496, height: 499 },
+    { x: 2361, y: 1120, width: 494, height: 498 },
+    { x: 2938, y: 1120, width: 494, height: 499 },
+  ],
 ];
+
+let currentRow = 0;
+
+function changeRow(row) {
+  currentRow = row;
+}
 
         let img = new Image();
         img.src = "maps.png";
@@ -139,18 +166,17 @@ sourceHeight: 0,
 
 
 
-        function setSprite(spriteIndex) {
-        const sprite = spriteData[spriteIndex];
-        player.sourceX = sprite.x;
-        player.sourceY = sprite.y;
-        player.sourceWidth = sprite.width;
-        player.sourceHeight = sprite.height;
-      }
+function setSprite(spriteIndex) {
+  const sprite = spriteData[currentRow][spriteIndex];
+  player.sourceX = sprite.x;
+  player.sourceY = sprite.y;
+  player.sourceWidth = sprite.width;
+  player.sourceHeight = sprite.height;
+}
   let currentSprite = 0;
   const animationDuration = 800; // Adjust this value to change the animation speed
 
   function animateCharacter(player) {
-    console.log('Animating character with currentSprite:', currentSprite);
     setSprite(currentSprite);
     currentSprite = (currentSprite + 1) % spriteData.length;
 
@@ -172,10 +198,24 @@ sourceHeight: 0,
     requestAnimationFrame(() => animateCharacter(player));
   }
   function drawPlayer() {
-    console.log('drawPlayer called')
-    console.log('Drawing player with spriteSheet:', spriteSheet);
-    ctx.save();
-    ctx.translate(player.x, player.y);
+  ctx.save();
+  ctx.translate(player.x, player.y);
+
+  // Check the current direction and flip the sprite accordingly
+  if (currentDirection === 'left') {
+    ctx.scale(-1, 1);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      -player.width, // Adjust the x position when flipped
+      0,
+      player.width,
+      player.height
+    );
+  } else {
     ctx.drawImage(
       spriteSheet,
       player.sourceX,
@@ -187,8 +227,10 @@ sourceHeight: 0,
       player.width,
       player.height
     );
-    ctx.restore();
   }
+
+  ctx.restore();
+}
 
 
 
@@ -333,8 +375,9 @@ items.splice(i, 1);
 if (checkCollision(item, player)) {
 if (item.type === 'brioche') {
   briocheHits++;
+  changeRow(2);
 
-  if (briocheHits >= 20) {
+  if (briocheHits >= 220) {
     clearInterval(gameInterval);
     gameOver = true;
   }
@@ -346,6 +389,7 @@ if (item.type === 'brioche') {
   }
 } else {
   score++;
+  changeRow(3);
   console.log('Current score:', score);
   console.log('brioche', briocheHits); // Debug statement
 }
