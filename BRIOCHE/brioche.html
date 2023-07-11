@@ -21,7 +21,7 @@
       height: 100vh;
       margin: 0;
       border: 10px solid black;
-      background-image: url('map.png');
+      background-image: url("map.png");
 
     }
 
@@ -50,15 +50,6 @@
 }
 
 
-.corasanCSS {
-  position: absolute;
-  top: -26px;
-  left: -156px;
-  width: 46px; /* Width of a single sprite image */
-  height: 50px; /* Height of a single sprite image */
-  background-image: url('corasanFile.png');
-  background-repeat: no-repeat;
-}
 
     </style>
 </head>
@@ -67,14 +58,8 @@
 
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
-    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;">
-      <div class="debugCorasan">
-    <div class="corasanCSS"></div>
+    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
   </div>
-  </canvas>
-
-
-</div>
 
 
     <script>
@@ -85,13 +70,27 @@
         const maryImg = new Image();
         const healImg = new Image();
         const corasanImg = new Image();
+        const spriteSheet = new Image();
+
+  spriteSheet.onerror = function(event) {
+    console.error('Error loading the sprite sheet image:', event);
+  };
+
+  spriteSheet.src = 'shadow_dog.png';
+  const spriteData = [
+    { x: 40, y: 59, width: 496, height: 462 },
+    { x: 623, y: 60, width: 497, height: 462 },
+    { x: 1208, y: 61, width: 496, height: 462 },
+    { x: 1793, y: 62, width: 494, height: 462 },
+    { x: 2358, y: 61, width: 496, height: 462 },
+    { x: 2923, y: 60, width: 496, height: 462 },
+  ];
 
         let img = new Image();
         img.src = "maps.png";
         briocheImg.src = 'brioche.png';
         maryImg.src = 'mary.jpg';
         healImg.src = 'heal.gif';
-        corasanImg.src ='corasanFile.png'
 
         let gameInterval;
         let score = 0;
@@ -126,13 +125,70 @@ function renderBackground() {
 }
 
 
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            width: 259,
-            height: 294,
-            speed: 20,
-        };
+const player = {
+x: canvas.width / 2,
+y: canvas.height / 2,
+width: 259,
+height: 294,
+speed: 20,
+sourceX: 0,
+sourceY: 0,
+sourceWidth: 0,
+sourceHeight: 0,
+};
+
+
+
+        function setSprite(spriteIndex) {
+        const sprite = spriteData[spriteIndex];
+        player.sourceX = sprite.x;
+        player.sourceY = sprite.y;
+        player.sourceWidth = sprite.width;
+        player.sourceHeight = sprite.height;
+      }
+  let currentSprite = 0;
+  const animationDuration = 800; // Adjust this value to change the animation speed
+
+  function animateCharacter(player) {
+    setSprite(currentSprite);
+    currentSprite = (currentSprite + 1) % spriteData.length;
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      0,
+      0,
+      player.width,
+      player.height
+    );
+    ctx.restore();
+
+    requestAnimationFrame(() => animateCharacter(player));
+  }
+  function drawPlayer() {
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      0,
+      0,
+      player.width,
+      player.height
+    );
+    ctx.restore();
+  }
+
+
 
 
 
@@ -215,39 +271,8 @@ function renderBackground() {
           }
         }
 
-        function corasanAnimazione(frame) {
-                   const sprite = document.querySelector('.corasanCSS');
-                   const offsetXValues = [-26, -104, -165, -239, -317, -378]; // offsetX values for each sprite
-                   const frameHeight = 50; // Height of a single sprite image
-
-                   const offsetX = offsetXValues[frame];
-                   const offsetY = 0;
-                   sprite.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
-                 }
-
-                 function drawPlayer() {
-                    const frameDuration = 3000; // Delay between frame changes in milliseconds (e.g., 200ms)
-                    const totalFrames = 6; // Number of frames in the sprite animation
-                    const frame = Math.floor(Date.now() / frameDuration) % totalFrames;
-                    const frameWidth = 40; // Width of a single sprite image
-                    const frameHeight = 49; // Height of a single sprite image
-                    const offsetX = frameWidth * frame;
-                    const offsetY = 0;
-                    // Rest of your code...
 
 
-            ctx.drawImage(
-              corasanImg,
-              offsetX,
-              offsetY,
-              frameWidth,
-              frameHeight,
-              player.x,
-              player.y,
-              player.width,
-              player.height
-            );
-          }
 
 
 
@@ -363,21 +388,20 @@ function drawItems() {
       let lastFlipTime = 0;
 
       function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        renderBackground();
-
-        corasanAnimazione(0);
-        updatePlayerPosition();
-        updateItems();
-        drawScore();
-        drawPlayer();
-        drawItems();
-        healItem();
-        requestAnimationFrame(gameLoop);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    renderBackground();
+    // I Removed the animateCharacter(player) call from here to debug, the rectangle draws fine anyway the image not
+    updatePlayerPosition();
+    updateItems();
+    drawScore();
+    drawItems();
+    healItem();
+    drawPlayer();
+    requestAnimationFrame(gameLoop);
 
         if (gameOver) {
           clearInterval(gameInterval);
-          setTimeout(showGameOverScreen, 1000); // Display game over screen after a 2-second delay
+          setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
         }
       }
 
@@ -393,7 +417,7 @@ function drawItems() {
         score = 0;
         briocheHits = 0;
         gameOver = false;
-
+        animateCharacter(player); // Call animateCharacter once before starting the game loop
         gameLoop();
         bgMusic.play();
         setInterval(spawnItems, 1000); // Start spawning items immediately
@@ -481,6 +505,9 @@ function drawItems() {
         function handleTouchEnd() {
           touchControls.isDragging = false;
         }
+
+
+
     </script>
 </body>
 </html>
