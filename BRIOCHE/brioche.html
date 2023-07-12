@@ -18,7 +18,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 91vh;
       margin: 0;
       border: 10px solid black;
       background-image: url("map.png");
@@ -47,6 +47,14 @@
     transform: translate(-50%, -50%);
     font-size: 24px;
     padding: 10px 20px;
+        }
+    #fullscreenButton {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    transform: translate(-80%, -80%);
+    font-size: 24px;
+    padding: 10px 20px;
 }
 
 
@@ -54,11 +62,12 @@
     </style>
 </head>
 <body>
-  <audio id="bgMusic" src="music.mp3" loop></audio>
+  <audio id="bgMusic" src="music.mp4" loop></audio>
 
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
-    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
+    <button id="fullscreenButton" style="z-index: 1;">[ ]</button>
+    <canvas id="gameCanvas" width="3000" height="2244" style="z-index: 0;"></canvas>
   </div>
 
 
@@ -76,15 +85,42 @@
     console.error('Error loading the sprite sheet image:', event);
   };
 
-  spriteSheet.src = 'shadow_dog.png';
+  spriteSheet.src = 'corasanFile.png';
   const spriteData = [
-    { x: 40, y: 59, width: 496, height: 462 },
-    { x: 623, y: 60, width: 497, height: 462 },
-    { x: 1208, y: 61, width: 496, height: 462 },
-    { x: 1793, y: 62, width: 494, height: 462 },
+  // Row 1
+  [
+    { x: 80, y: 8, width: 596, height: 399 },
+    { x: 745, y: 0, width: 506, height: 367 },
+    { x: 1811, y: -8, width: 514, height: 403 },
+    { x: 1793, y: 62, width: 494, height: 403 },
     { x: 2358, y: 61, width: 496, height: 462 },
     { x: 2923, y: 60, width: 496, height: 462 },
-  ];
+  ],
+  // Row 2 (smokingSheet)
+  [
+    { x: 66, y: 467, width: 587, height: 400 },
+    { x: 710, y: 449, width: 518, height: 400 },
+    { x: 1290, y:443, width: 483, height: 454 },
+    { x: 1787, y: 464, width: 515, height: 403 },
+    { x: 2347, y: 468, width: 641, height: 399 },
+    { x: 2897, y: 538, width: 494, height: 499 },
+  ],
+// Row3 (CicciaSheet)
+[
+    { x: 65, y: 1120, width: 525, height: 403 },
+    { x: 638, y: 1120, width: 525, height: 403 },
+    { x: 1295, y: 971, width: 521, height: 403 },
+    { x: 1863, y: 971, width: 514, height: 423 },
+    { x: 2361, y: 1120, width: 514, height: 423 },
+    { x: 2938, y: 1120, width: 514, height: 423 },
+  ],
+];
+
+let currentRow = 0;
+
+function changeRow(row) {
+  currentRow = row;
+}
 
         let img = new Image();
         img.src = "maps.png";
@@ -139,37 +175,37 @@ sourceHeight: 0,
 
 
 
-        function setSprite(spriteIndex) {
-        const sprite = spriteData[spriteIndex];
-        player.sourceX = sprite.x;
-        player.sourceY = sprite.y;
-        player.sourceWidth = sprite.width;
-        player.sourceHeight = sprite.height;
-      }
+function setSprite(spriteIndex) {
+  const sprite = spriteData[currentRow][spriteIndex];
+  player.sourceX = sprite.x;
+  player.sourceY = sprite.y;
+  player.sourceWidth = sprite.width;
+  player.sourceHeight = sprite.height;
+}
   let currentSprite = 0;
   const animationDuration = 800; // Adjust this value to change the animation speed
 
   function animateCharacter(player) {
-    setSprite(currentSprite);
-    currentSprite = (currentSprite + 1) % spriteData.length;
+  setSprite(currentSprite);
+  currentSprite = (currentSprite + 1) % spriteData[currentRow].length;
 
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.drawImage(
-      spriteSheet,
-      player.sourceX,
-      player.sourceY,
-      player.sourceWidth,
-      player.sourceHeight,
-      0,
-      0,
-      player.width,
-      player.height
-    );
-    ctx.restore();
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.drawImage(
+    spriteSheet,
+    player.sourceX,
+    player.sourceY,
+    player.sourceWidth,
+    player.sourceHeight,
+    0,
+    0,
+    player.width,
+    player.height
+  );
+  ctx.restore();
 
-    requestAnimationFrame(() => animateCharacter(player));
-  }
+  requestAnimationFrame(() => animateCharacter(player));
+}
   function drawPlayer() {
   ctx.save();
   ctx.translate(player.x, player.y);
@@ -348,8 +384,9 @@ items.splice(i, 1);
 if (checkCollision(item, player)) {
 if (item.type === 'brioche') {
   briocheHits++;
+  changeRow(1);
 
-  if (briocheHits >= 20) {
+  if (briocheHits >= 220) {
     clearInterval(gameInterval);
     gameOver = true;
   }
@@ -361,6 +398,7 @@ if (item.type === 'brioche') {
   }
 } else {
   score++;
+  changeRow(2);
   console.log('Current score:', score);
   console.log('brioche', briocheHits); // Debug statement
 }
@@ -407,7 +445,6 @@ function drawItems() {
       function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     renderBackground();
-    // I Removed the animateCharacter(player) call from here to debug, the rectangle draws fine anyway the image not
     updatePlayerPosition();
     updateItems();
     drawScore();
@@ -522,7 +559,18 @@ function drawItems() {
         function handleTouchEnd() {
           touchControls.isDragging = false;
         }
+        
+        function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
 
+document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
 
 
     </script>
