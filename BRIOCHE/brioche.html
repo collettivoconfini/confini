@@ -384,7 +384,7 @@ items.splice(i, 1);
 if (checkCollision(item, player)) {
 if (item.type === 'brioche') {
   briocheHits++;
-  changeRow(1);
+  changeRow(2);
 
   if (briocheHits >= 22220) {
     clearInterval(gameInterval);
@@ -398,7 +398,7 @@ if (item.type === 'brioche') {
   }
 } else {
   score++;
-  changeRow(2);
+  changeRow(1);
   console.log('Current score:', score);
   console.log('brioche', briocheHits); // Debug statement
 }
