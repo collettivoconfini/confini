@@ -48,13 +48,27 @@
     font-size: 24px;
     padding: 10px 20px;
         }
-    #fullscreenButton {
-    position: absolute;
-    top: 10%;
-    left: 10%;
-    transform: translate(-80%, -80%);
-    font-size: 24px;
-    padding: 10px 20px;
+
+
+        .body.ios-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Modify your existing #fullscreenButton CSS rule */
+#fullscreenButton {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  transform: translate(-80%, -80%);
+  font-size: 24px;
+  padding: 10px 20px;
+  z-index: 1; /* Add this line to ensure the button is above the game container */
 }
 
 
@@ -386,7 +400,7 @@ if (item.type === 'brioche') {
   briocheHits++;
   changeRow(1);
 
-  if (briocheHits >= 220) {
+  if (briocheHits >= 12020) {
     clearInterval(gameInterval);
     gameOver = true;
   }
@@ -563,9 +577,11 @@ function drawItems() {
         function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
+    document.body.classList.add('ios-fullscreen');
   } else {
     if (document.exitFullscreen) {
       document.exitFullscreen();
+      document.body.classList.remove('ios-fullscreen');
     }
   }
 }
