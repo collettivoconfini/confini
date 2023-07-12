@@ -48,27 +48,13 @@
     font-size: 24px;
     padding: 10px 20px;
         }
-
-
-        .body.ios-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  overflow: hidden;
-}
-
-/* Modify your existing #fullscreenButton CSS rule */
-#fullscreenButton {
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  transform: translate(-80%, -80%);
-  font-size: 24px;
-  padding: 10px 20px;
-  z-index: 1; /* Add this line to ensure the button is above the game container */
+    #fullscreenButton {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    transform: translate(-80%, -80%);
+    font-size: 24px;
+    padding: 10px 20px;
 }
 
 
@@ -76,7 +62,7 @@
     </style>
 </head>
 <body>
-  <audio id="bgMusic" src="music.mp4" loop></audio>
+  <audio id="bgMusic" src="music.mp4"></audio>
 
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
@@ -400,7 +386,7 @@ if (item.type === 'brioche') {
   briocheHits++;
   changeRow(1);
 
-  if (briocheHits >= 12020) {
+  if (briocheHits >= 22220) {
     clearInterval(gameInterval);
     gameOver = true;
   }
@@ -469,7 +455,7 @@ function drawItems() {
 
         if (gameOver) {
           clearInterval(gameInterval);
-          setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
+          setTimeout(showGameOverScreen); // Display game over screen after a NOW 0 second delay
         }
       }
 
@@ -479,25 +465,35 @@ function drawItems() {
           }
 
 
-      function startGame() {
-        isFirstHealItemSpawn = true;
-        currentLevel = 0;
-        score = 0;
-        briocheHits = 0;
-        gameOver = false;
-        animateCharacter(player); // Call animateCharacter once before starting the game loop
-        gameLoop();
-        bgMusic.play();
-        setInterval(spawnItems, 1000); // Start spawning items immediately
-      }
+          function startGame() {
+    isFirstHealItemSpawn = true;
+    currentLevel = 0;
+    score = 0;
+    briocheHits = 0;
+    gameOver = false;
+    animateCharacter(player); // Call animateCharacter once before starting the game loop
+    gameLoop();
+    bgMusic.play();
+    setInterval(spawnItems, 1000); // Start spawning items immediately
+  }
 
-     startBtn.addEventListener('click', () => {
-       if (!gameOver) {
-         bgMusic.pause();
-         flipInterval = 500;
-         startGame();
-       }
+  function endGame() {
+    clearInterval(gameInterval);
+    gameOver = true;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (!gameOver) {
+      bgMusic.pause();
+      flipInterval = 500;
+      startGame();
+    }
+ 
+       
      });
+     bgMusic.addEventListener('ended', endGame);
+
+     
 
         //WHAT HAPPENS AFTER A SUCCESFUL GAME OVER
 
@@ -577,11 +573,9 @@ function drawItems() {
         function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
-    document.body.classList.add('ios-fullscreen');
   } else {
     if (document.exitFullscreen) {
       document.exitFullscreen();
-      document.body.classList.remove('ios-fullscreen');
     }
   }
 }
