@@ -21,7 +21,7 @@
       height: 91vh;
       margin: 0;
       border: 10px solid black;
-      background-image: url("map.png");
+      background-image: url("lvl1.png");
 
     }
 
@@ -76,7 +76,6 @@
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
         const briocheImg = new Image();
-        const gymImg = new Image();
         const maryImg = new Image();
         const healImg = new Image();
         const corasanImg = new Image();
@@ -123,11 +122,11 @@ function changeRow(row) {
   currentRow = row;
 }
 
-        let img = new Image();
-        img.src = "maps.png";
+let img = new Image();
+img.src = "map0.png";
+let lvl = new Image();
+lvl.src = "level0.jpg";
         briocheImg.src = 'brioche.png';
-        gymImg.src = 'gym.png';
-
         maryImg.src = 'mary.jpg';
         healImg.src = 'heal.gif';
 
@@ -143,16 +142,35 @@ function changeRow(row) {
         img.onload = function () {
   imgWidth = this.width;
 };
+function updateImages() {
+  currentLevel++;
+  if (currentLevel > 5) {
+    currentLevel = 0;
+  }
+  img.src = `map${currentLevel}.png`;
+  lvl.src = `level${currentLevel}.jpg`;
+}
+
+// Update images every 30 seconds
+setInterval(updateImages, 30000);
+
+
 
 function renderBackground() {
-  // Draw the first copy of the image
+  // Draw the new background image
+  ctx.drawImage(lvl, 0, 0, canvas.width, canvas.height);
+
+  // Draw the first copy of the current image
   ctx.drawImage(img, xPos, 0, imgWidth, canvas.height);
 
-  // Draw the second copy of the image, flipped on the x-axis
+  // Draw the second copy of the current image, flipped on the x-axis
   ctx.save();
   ctx.scale(-1, 1);
   ctx.drawImage(img, -xPos - imgWidth * 2, 0, imgWidth, canvas.height);
   ctx.restore();
+
+  // Reset the global alpha to 1 (no transparency)
+  ctx.globalAlpha = 1;
 
   // Update the x position
   xPos -= scrollSpeed;
@@ -248,7 +266,7 @@ function setSprite(spriteIndex) {
 
 
 
-        let items = [];
+        const items = [];
 
         let movement = {
           ArrowUp: false,
@@ -343,19 +361,11 @@ function setSprite(spriteIndex) {
 
         }
 
-
         let startTime = Date.now();
-let gymItem = null;
 
 function spawnItems() {
     const elapsedTime = (Date.now() - startTime) / 1000; // Time in seconds
     let spawnRateMultiplier = 1;
-
-    if (briocheHits >= 20 && briocheHits % 20 === 0) {
-        removeAllItems();
-        spawnGymItem();
-        return;
-    }
 
     if (elapsedTime >= 10 && elapsedTime < 60) {
         spawnRateMultiplier = 1.1;
@@ -380,20 +390,25 @@ function spawnItems() {
     }
 }
 
-function removeAllItems() {
-    items = [];
+function scheduleSpawnItems() {
+    const elapsedTime = (Date.now() - startTime) / 1000;
+    let spawnInterval = 1000; // 1 second
+
+    if (elapsedTime >= 10 && elapsedTime < 60) {
+        spawnInterval = 900; // 0.9 seconds
+    } else if (elapsedTime >= 60 && elapsedTime < 120) {
+        spawnInterval = 750; // 0.75 seconds
+    } else if (elapsedTime >= 120 && elapsedTime < 180) {
+        spawnInterval = 600; // 0.6 seconds
+    } else if (elapsedTime >= 180) {
+        spawnInterval = 500; // 0.5 seconds
+    }
+
+    spawnItems();
+    setTimeout(scheduleSpawnItems, spawnInterval);
 }
 
-function spawnGymItem() {
-    const x = Math.random() * (canvas.width - 30);
-    const y = -30;
-    const speedX = (Math.random() * 2 - 1) * 2;
-    const speedY = Math.random() * 2 + 1;
-    const item = { type: 'gym', x, y, width: 90, height: 90, speedX, speedY };
-    gymItem = item;
-}
-
-
+scheduleSpawnItems();
 
         function healItem() {
         const existingHealItem = items.find(item => item.type === 'heal.gif');
@@ -416,44 +431,41 @@ function spawnGymItem() {
 
 
 
-      function updateItems() {
-    for (let i = items.length - 1; i >= 0; i--) {
-        const item = items[i];
-        item.x += item.speedX;
-        item.y += item.speedY;
+function updateItems() {
+for (let i = items.length - 1; i >= 0; i--) {
+const item = items[i];
+item.x += item.speedX;
+item.y += item.speedY;
 
-        if (item.y > canvas.height) {
-            items.splice(i, 1);
-        }
+if (item.y > canvas.height) {
+items.splice(i, 1);
+}
 
-        if (checkCollision(item, player)) {
-            if (item.type === 'brioche') {
-                briocheHits++;
-                changeRow(2);
+if (checkCollision(item, player)) {
+if (item.type === 'brioche') {
+  briocheHits++;
+  changeRow(2);
 
-                if (briocheHits >= 22220) {
-                    clearInterval(gameInterval);
-                    gameOver = true;
-                }
-            } else if (item.type === 'heal.gif') {
-                briocheHits--;
-                console.log('heal', briocheHits);
-                if (briocheHits < 0) {
-                    briocheHits = 0;
-                }
-            } else if (item.type === 'gym') {
-                gymItem = null;
-                spawnItems();
-            } else {
-                score++;
-                changeRow(1);
-                console.log('Current score:', score);
-                console.log('brioche', briocheHits); // Debug statement
-            }
+  if (briocheHits >= 22220) {
+    clearInterval(gameInterval);
+    gameOver = true;
+  }
+} else if (item.type === 'heal.gif') {
+  briocheHits--;
+  console.log('heal', briocheHits);
+  if (briocheHits < 0) {
+    briocheHits = 0;
+  }
+} else {
+  score++;
+  changeRow(1);
+  console.log('Current score:', score);
+  console.log('brioche', briocheHits); // Debug statement
+}
 
-            items.splice(i, 1);
-        }
-    }
+items.splice(i, 1);
+}
+}
 }
 
 
