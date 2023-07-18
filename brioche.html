@@ -18,10 +18,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 91vh;
       margin: 0;
       border: 10px solid black;
-      background-image: url("map.png");
+      background-image: url("lvl1.png");
 
     }
 
@@ -47,6 +47,14 @@
     transform: translate(-50%, -50%);
     font-size: 24px;
     padding: 10px 20px;
+        }
+    #fullscreenButton {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    transform: translate(-80%, -80%);
+    font-size: 24px;
+    padding: 10px 20px;
 }
 
 
@@ -54,11 +62,12 @@
     </style>
 </head>
 <body>
-  <audio id="bgMusic" src="music.mp3" loop></audio>
+  <audio id="bgMusic" src="music.mp4"></audio>
 
   <div id="divCanvas" style="position: relative;">
     <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
-    <canvas id="gameCanvas" width="2000" height="1344" style="z-index: 0;"></canvas>
+    <button id="fullscreenButton" style="z-index: 1;">[ ]</button>
+    <canvas id="gameCanvas" width="3000" height="2244" style="z-index: 0;"></canvas>
   </div>
 
 
@@ -76,34 +85,34 @@
     console.error('Error loading the sprite sheet image:', event);
   };
 
-  spriteSheet.src = 'shadow_dog.png';
+  spriteSheet.src = 'corasanFile.png';
   const spriteData = [
   // Row 1
   [
-    { x: 40, y: 59, width: 496, height: 462 },
-    { x: 623, y: 60, width: 497, height: 462 },
-    { x: 1208, y: 61, width: 496, height: 462 },
-    { x: 1793, y: 62, width: 494, height: 462 },
+    { x: 80, y: 8, width: 596, height: 399 },
+    { x: 745, y: 0, width: 506, height: 367 },
+    { x: 1811, y: -8, width: 514, height: 403 },
+    { x: 1793, y: 62, width: 494, height: 403 },
     { x: 2358, y: 61, width: 496, height: 462 },
     { x: 2923, y: 60, width: 496, height: 462 },
   ],
   // Row 2 (smokingSheet)
   [
-    { x: 21, y: 542, width: 498, height: 496 },
-    { x: 597, y: 538, width: 497, height: 498 },
-    { x: 1173, y: 535, width: 496, height: 498 },
-    { x: 1749, y: 531, width: 496, height: 499 },
-    { x: 2323, y: 535, width: 494, height: 498 },
-    { x: 2923, y: 60, width: 494, height: 499 },
+    { x: 66, y: 467, width: 587, height: 400 },
+    { x: 710, y: 449, width: 518, height: 400 },
+    { x: 1290, y:443, width: 483, height: 454 },
+    { x: 1787, y: 464, width: 515, height: 403 },
+    { x: 2347, y: 468, width: 641, height: 399 },
+    { x: 2897, y: 538, width: 494, height: 499 },
   ],
 // Row3 (CicciaSheet)
 [
-    { x: 65, y: 1120, width: 498, height: 496 },
-    { x: 638, y: 1120, width: 497, height: 498 },
-    { x: 1211, y: 1119, width: 496, height: 498 },
-    { x: 1784, y: 1118, width: 496, height: 499 },
-    { x: 2361, y: 1120, width: 494, height: 498 },
-    { x: 2938, y: 1120, width: 494, height: 499 },
+    { x: 65, y: 1120, width: 525, height: 403 },
+    { x: 638, y: 1120, width: 525, height: 403 },
+    { x: 1295, y: 971, width: 521, height: 403 },
+    { x: 1863, y: 971, width: 514, height: 423 },
+    { x: 2361, y: 1120, width: 514, height: 423 },
+    { x: 2938, y: 1120, width: 514, height: 423 },
   ],
 ];
 
@@ -113,8 +122,10 @@ function changeRow(row) {
   currentRow = row;
 }
 
-        let img = new Image();
-        img.src = "maps.png";
+let img = new Image();
+img.src = "map0.png";
+let lvl = new Image();
+lvl.src = "level0.jpg";
         briocheImg.src = 'brioche.png';
         maryImg.src = 'mary.jpg';
         healImg.src = 'heal.gif';
@@ -131,16 +142,35 @@ function changeRow(row) {
         img.onload = function () {
   imgWidth = this.width;
 };
+function updateImages() {
+  currentLevel++;
+  if (currentLevel > 5) {
+    currentLevel = 0;
+  }
+  img.src = `map${currentLevel}.png`;
+  lvl.src = `level${currentLevel}.jpg`;
+}
+
+// Update images every 30 seconds
+setInterval(updateImages, 30000);
+
+
 
 function renderBackground() {
-  // Draw the first copy of the image
+  // Draw the new background image
+  ctx.drawImage(lvl, 0, 0, canvas.width, canvas.height);
+
+  // Draw the first copy of the current image
   ctx.drawImage(img, xPos, 0, imgWidth, canvas.height);
 
-  // Draw the second copy of the image, flipped on the x-axis
+  // Draw the second copy of the current image, flipped on the x-axis
   ctx.save();
   ctx.scale(-1, 1);
   ctx.drawImage(img, -xPos - imgWidth * 2, 0, imgWidth, canvas.height);
   ctx.restore();
+
+  // Reset the global alpha to 1 (no transparency)
+  ctx.globalAlpha = 1;
 
   // Update the x position
   xPos -= scrollSpeed;
@@ -177,26 +207,26 @@ function setSprite(spriteIndex) {
   const animationDuration = 800; // Adjust this value to change the animation speed
 
   function animateCharacter(player) {
-    setSprite(currentSprite);
-    currentSprite = (currentSprite + 1) % spriteData.length;
+  setSprite(currentSprite);
+  currentSprite = (currentSprite + 1) % spriteData[currentRow].length;
 
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.drawImage(
-      spriteSheet,
-      player.sourceX,
-      player.sourceY,
-      player.sourceWidth,
-      player.sourceHeight,
-      0,
-      0,
-      player.width,
-      player.height
-    );
-    ctx.restore();
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.drawImage(
+    spriteSheet,
+    player.sourceX,
+    player.sourceY,
+    player.sourceWidth,
+    player.sourceHeight,
+    0,
+    0,
+    player.width,
+    player.height
+  );
+  ctx.restore();
 
-    requestAnimationFrame(() => animateCharacter(player));
-  }
+  requestAnimationFrame(() => animateCharacter(player));
+}
   function drawPlayer() {
   ctx.save();
   ctx.translate(player.x, player.y);
@@ -331,15 +361,54 @@ function setSprite(spriteIndex) {
 
         }
 
-        function spawnItems() {
-            const type = Math.random() < 0.5 ? 'brioche' : 'mary';
-            const x = Math.random() * (canvas.width - 30);
-            const y = -30;
-            const speedX = (Math.random() * 2 - 1) * 2;
-            const speedY = Math.random() * 2 + 1;
-            const item = { type, x, y, width: 90, height: 90, speedX, speedY };
-            items.push(item);
-        }
+        let startTime = Date.now();
+
+function spawnItems() {
+    const elapsedTime = (Date.now() - startTime) / 1000; // Time in seconds
+    let spawnRateMultiplier = 1;
+
+    if (elapsedTime >= 10 && elapsedTime < 60) {
+        spawnRateMultiplier = 1.1;
+    } else if (elapsedTime >= 60 && elapsedTime < 120) {
+        spawnRateMultiplier = 1.33;
+    } else if (elapsedTime >= 120 && elapsedTime < 180) {
+        spawnRateMultiplier = 1.66;
+    } else if (elapsedTime >= 180) {
+        spawnRateMultiplier = 2;
+    }
+
+    const numberOfItems = Math.ceil(spawnRateMultiplier);
+
+    for (let i = 0; i < numberOfItems; i++) {
+        const type = Math.random() < 0.5 ? 'brioche' : 'mary';
+        const x = Math.random() * (canvas.width - 30);
+        const y = -30;
+        const speedX = (Math.random() * 2 - 1) * 2;
+        const speedY = Math.random() * 2 + 1;
+        const item = { type, x, y, width: 90, height: 90, speedX, speedY };
+        items.push(item);
+    }
+}
+
+function scheduleSpawnItems() {
+    const elapsedTime = (Date.now() - startTime) / 1000;
+    let spawnInterval = 1000; // 1 second
+
+    if (elapsedTime >= 10 && elapsedTime < 60) {
+        spawnInterval = 900; // 0.9 seconds
+    } else if (elapsedTime >= 60 && elapsedTime < 120) {
+        spawnInterval = 750; // 0.75 seconds
+    } else if (elapsedTime >= 120 && elapsedTime < 180) {
+        spawnInterval = 600; // 0.6 seconds
+    } else if (elapsedTime >= 180) {
+        spawnInterval = 500; // 0.5 seconds
+    }
+
+    spawnItems();
+    setTimeout(scheduleSpawnItems, spawnInterval);
+}
+
+scheduleSpawnItems();
 
         function healItem() {
         const existingHealItem = items.find(item => item.type === 'heal.gif');
@@ -377,7 +446,7 @@ if (item.type === 'brioche') {
   briocheHits++;
   changeRow(2);
 
-  if (briocheHits >= 220) {
+  if (briocheHits >= 22220) {
     clearInterval(gameInterval);
     gameOver = true;
   }
@@ -389,7 +458,7 @@ if (item.type === 'brioche') {
   }
 } else {
   score++;
-  changeRow(3);
+  changeRow(1);
   console.log('Current score:', score);
   console.log('brioche', briocheHits); // Debug statement
 }
@@ -436,7 +505,6 @@ function drawItems() {
       function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     renderBackground();
-    // I Removed the animateCharacter(player) call from here to debug, the rectangle draws fine anyway the image not
     updatePlayerPosition();
     updateItems();
     drawScore();
@@ -447,7 +515,7 @@ function drawItems() {
 
         if (gameOver) {
           clearInterval(gameInterval);
-          setTimeout(showGameOverScreen, 2000); // Display game over screen after a 2-second delay
+          setTimeout(showGameOverScreen); // Display game over screen after a NOW 0 second delay
         }
       }
 
@@ -457,25 +525,35 @@ function drawItems() {
           }
 
 
-      function startGame() {
-        isFirstHealItemSpawn = true;
-        currentLevel = 0;
-        score = 0;
-        briocheHits = 0;
-        gameOver = false;
-        animateCharacter(player); // Call animateCharacter once before starting the game loop
-        gameLoop();
-        bgMusic.play();
-        setInterval(spawnItems, 1000); // Start spawning items immediately
-      }
+          function startGame() {
+    isFirstHealItemSpawn = true;
+    currentLevel = 0;
+    score = 0;
+    briocheHits = 0;
+    gameOver = false;
+    animateCharacter(player); // Call animateCharacter once before starting the game loop
+    gameLoop();
+    bgMusic.play();
+    setInterval(spawnItems, 1000); // Start spawning items immediately
+  }
 
-     startBtn.addEventListener('click', () => {
-       if (!gameOver) {
-         bgMusic.pause();
-         flipInterval = 500;
-         startGame();
-       }
+  function endGame() {
+    clearInterval(gameInterval);
+    gameOver = true;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (!gameOver) {
+      bgMusic.pause();
+      flipInterval = 500;
+      startGame();
+    }
+ 
+       
      });
+     bgMusic.addEventListener('ended', endGame);
+
+     
 
         //WHAT HAPPENS AFTER A SUCCESFUL GAME OVER
 
@@ -551,7 +629,18 @@ function drawItems() {
         function handleTouchEnd() {
           touchControls.isDragging = false;
         }
+        
+        function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
 
+document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
 
 
     </script>
