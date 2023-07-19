@@ -443,7 +443,7 @@ scheduleSpawnItems();
         function healItem() {
         const existingHealItem = items.find(item => item.type === 'heal.gif');
 
-        if (!existingHealItem && score > 0 && score % 29 === 0) {
+        if (!existingHealItem && score > 0 && score % 13 === 0) {
           const type = 'heal.gif'; // Replace 'heal.gif' with the actual filename of your heal image
           const x = Math.random() * (canvas.width - 90);
           const y = Math.random() * (canvas.height - 90);
