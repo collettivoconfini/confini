@@ -21,7 +21,7 @@
       height: 91vh;
       margin: 0;
       border: 10px solid black;
-      background-image: url("lvl1.png");
+      background-image: url("level1.jpg");
 
     }
 
@@ -62,6 +62,9 @@
     </style>
 </head>
 <body>
+  <div id="loadingScreen" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; background: url('https://i.gifer.com/3RXH.gif') center center no-repeat; display: none;">
+    <div id="loadingBar" style="position: absolute; bottom: 0; left: 0; height: 10px; background-color: #00ff00; width: 0%;"></div>
+  </div>
   <audio id="bgMusic" src="music.mp4"></audio>
 
   <div id="divCanvas" style="position: relative;">
@@ -85,34 +88,34 @@
     console.error('Error loading the sprite sheet image:', event);
   };
 
-  spriteSheet.src = 'corasanFile.png';
+  spriteSheet.src = 'spriteAlessio.png';
   const spriteData = [
   // Row 1
   [
-    { x: 80, y: 8, width: 596, height: 399 },
-    { x: 745, y: 0, width: 506, height: 367 },
-    { x: 1811, y: -8, width: 514, height: 403 },
-    { x: 1793, y: 62, width: 494, height: 403 },
-    { x: 2358, y: 61, width: 496, height: 462 },
-    { x: 2923, y: 60, width: 496, height: 462 },
+    { x: 0, y: 0, width: 256, height: 256 },
+    { x: 258, y: 0, width: 256, height: 256 },
+    { x: 512, y: 0, width: 256, height: 256 },
+    { x: 768, y: 0, width: 256, height: 256 },
+    { x: 1024, y: 0, width: 256, height: 256 },
+    { x: 1280, y: 0, width: 256, height: 256 },
   ],
   // Row 2 (smokingSheet)
   [
-    { x: 66, y: 467, width: 587, height: 400 },
-    { x: 710, y: 449, width: 518, height: 400 },
-    { x: 1290, y:443, width: 483, height: 454 },
-    { x: 1787, y: 464, width: 515, height: 403 },
-    { x: 2347, y: 468, width: 641, height: 399 },
-    { x: 2897, y: 538, width: 494, height: 499 },
+    { x: 0, y: 256, width: 256, height: 256 },
+    { x: 258, y: 256, width: 256, height: 256 },
+    { x: 512, y: 256, width: 256, height: 256 },
+    { x: 768, y: 256, width: 256, height: 256 },
+    { x: 1024, y: 256, width: 256, height: 256 },
+    { x: 1280, y: 256, width: 256, height: 256 },
   ],
 // Row3 (CicciaSheet)
 [
-    { x: 65, y: 1120, width: 525, height: 403 },
-    { x: 638, y: 1120, width: 525, height: 403 },
-    { x: 1295, y: 971, width: 521, height: 403 },
-    { x: 1863, y: 971, width: 514, height: 423 },
-    { x: 2361, y: 1120, width: 514, height: 423 },
-    { x: 2938, y: 1120, width: 514, height: 423 },
+    { x: 0, y: 512, width: 256, height: 256 },
+    { x: 258, y: 512, width: 256, height: 256 },
+    { x: 512, y: 512, width: 256, height: 256 },
+    { x: 768, y: 512, width: 256, height: 256 },
+    { x: 1024, y: 512, width: 256, height: 256 },
+    { x: 1280, y: 512, width: 256, height: 256 },
   ],
 ];
 
@@ -138,6 +141,21 @@ lvl.src = "level0.jpg";
         let imgWidth;
         let scrollSpeed = 2;
         let xPos = 0;
+
+        const briocheImages = [
+  "brioche.png",
+  "brioche2.png",
+  // ...
+  "brioche3.png"
+];
+
+const maryImages = [
+  "mary.jpg",
+  "mary2.jpg",
+  // ...
+  "mary3.jpg"
+];
+
 
         img.onload = function () {
   imgWidth = this.width;
@@ -185,8 +203,8 @@ function renderBackground() {
 const player = {
 x: canvas.width / 2,
 y: canvas.height / 2,
-width: 259,
-height: 294,
+width: 512,
+height: 512,
 speed: 20,
 sourceX: 0,
 sourceY: 0,
@@ -203,30 +221,43 @@ function setSprite(spriteIndex) {
   player.sourceWidth = sprite.width;
   player.sourceHeight = sprite.height;
 }
-  let currentSprite = 0;
-  const animationDuration = 800; // Adjust this value to change the animation speed
+let currentSprite = 0;
+const fps = 1; // Adjust this value to change the animation speed (e.g., 10 frames per second)
+let now;
+let then = Date.now();
+const interval = 1000 / fps;
+let delta;
 
-  function animateCharacter(player) {
-  setSprite(currentSprite);
-  currentSprite = (currentSprite + 1) % spriteData[currentRow].length;
+function animateCharacter(player) {
+  requestAnimationFrame(animateCharacter);
 
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.drawImage(
-    spriteSheet,
-    player.sourceX,
-    player.sourceY,
-    player.sourceWidth,
-    player.sourceHeight,
-    0,
-    0,
-    player.width,
-    player.height
-  );
-  ctx.restore();
+  now = Date.now();
+  delta = now - then;
 
-  requestAnimationFrame(() => animateCharacter(player));
+  if (delta > interval) {
+    then = now - (delta % interval);
+
+    setSprite(currentSprite);
+    currentSprite = (currentSprite + 1) % spriteData[currentRow].length;
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.drawImage(
+      spriteSheet,
+      player.sourceX,
+      player.sourceY,
+      player.sourceWidth,
+      player.sourceHeight,
+      0,
+      0,
+      player.width,
+      player.height
+    );
+    ctx.restore();
+  }
 }
+
+animateCharacter(player);
   function drawPlayer() {
   ctx.save();
   ctx.translate(player.x, player.y);
@@ -380,14 +411,15 @@ function spawnItems() {
     const numberOfItems = Math.ceil(spawnRateMultiplier);
 
     for (let i = 0; i < numberOfItems; i++) {
-        const type = Math.random() < 0.5 ? 'brioche' : 'mary';
-        const x = Math.random() * (canvas.width - 30);
-        const y = -30;
-        const speedX = (Math.random() * 2 - 1) * 2;
-        const speedY = Math.random() * 2 + 1;
-        const item = { type, x, y, width: 90, height: 90, speedX, speedY };
-        items.push(item);
-    }
+    const type = Math.random() < 0.5 ? 'brioche' : 'mary';
+    const image = type === 'brioche' ? briocheImages[Math.floor(Math.random() * briocheImages.length)] : maryImages[Math.floor(Math.random() * maryImages.length)];
+    const x = Math.random() * (canvas.width - 30);
+    const y = -30;
+    const speedX = (Math.random() * 2 - 1) * 2;
+    const speedY = Math.random() * 2 + 1;
+    const item = { type, image, x, y, width: 90, height: 90, speedX, speedY };
+    items.push(item);
+  }
 }
 
 function scheduleSpawnItems() {
@@ -413,7 +445,7 @@ scheduleSpawnItems();
         function healItem() {
         const existingHealItem = items.find(item => item.type === 'heal.gif');
 
-        if (!existingHealItem && score > 0 && score % 13 === 0) {
+        if (!existingHealItem && score > 0 && score % 29 === 0) {
           const type = 'heal.gif'; // Replace 'heal.gif' with the actual filename of your heal image
           const x = Math.random() * (canvas.width - 90);
           const y = Math.random() * (canvas.height - 90);
@@ -443,7 +475,7 @@ items.splice(i, 1);
 
 if (checkCollision(item, player)) {
 if (item.type === 'brioche') {
-  briocheHits++;
+  score--;
   changeRow(2);
 
   if (briocheHits >= 22220) {
@@ -451,8 +483,7 @@ if (item.type === 'brioche') {
     gameOver = true;
   }
 } else if (item.type === 'heal.gif') {
-  briocheHits--;
-  console.log('heal', briocheHits);
+  score+=10;
   if (briocheHits < 0) {
     briocheHits = 0;
   }
@@ -471,12 +502,15 @@ items.splice(i, 1);
 
 function drawItems() {
   for (const item of items) {
+    const img = new Image();
+    img.src = item.image;
+
     if (item.type === 'brioche') {
-      ctx.drawImage(briocheImg, item.x, item.y, item.width, item.height);
+      ctx.drawImage(img, item.x, item.y, item.width, item.height);
     } else if (item.type === 'heal.gif') {
       ctx.drawImage(healImg, item.x, item.y, item.width, item.height);
     } else {
-      ctx.drawImage(maryImg, item.x, item.y, item.width, item.height);
+      ctx.drawImage(img, item.x, item.y, item.width, item.height);
     }
   }
 }
@@ -642,6 +676,59 @@ function drawItems() {
 
 document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
 
+
+function preloadImage(url) {
+    var img = new Image();
+    img.src = url;
+    return img;
+  }
+
+  var imagesToLoad = [
+  "map0.png",
+  "map1.png",
+  "level0.jpg",
+  "level1.jpg",
+  "brioche.png",
+  "mary.jpg",
+  "heal.gif"
+];
+
+  var loadedImages = [];
+
+  imagesToLoad.forEach(function (url) {
+    loadedImages.push(preloadImage(url));
+  });
+
+  function updateLoadingBar(percentage) {
+    var loadingBar = document.getElementById("loadingBar");
+    loadingBar.style.width = percentage + "%";
+  }
+
+  function showLoadingScreen() {
+    var loadingScreen = document.getElementById("loadingScreen");
+    loadingScreen.style.display = "block";
+  }
+
+  function hideLoadingScreen() {
+    var loadingScreen = document.getElementById("loadingScreen");
+    loadingScreen.style.display = "none";
+  }
+
+  showLoadingScreen();
+
+  var imagesLoaded = 0;
+
+  loadedImages.forEach(function (img) {
+    img.onload = function () {
+      imagesLoaded++;
+      var percentage = (imagesLoaded / loadedImages.length) * 100;
+      updateLoadingBar(percentage);
+
+      if (imagesLoaded === loadedImages.length) {
+        hideLoadingScreen();
+      }
+    };
+  });
 
     </script>
 </body>
