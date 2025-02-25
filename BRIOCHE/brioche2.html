@@ -5,24 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brioche per Corasan</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-             background-color: red;
+            background-color: red;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
 
         #divCanvas {
-      display: flex;
-      justify-content: center;
-    }
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
 
-    canvas {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 91vh;
-      margin: 0;
-      border: 10px solid black;
-      background-image: url("level1.jpg");
-    }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-image: url("level1.jpg");
+            background-size: cover;
+            background-position: center;
+        }
 
         #controls {
             position: fixed;
@@ -32,43 +45,39 @@
             flex-direction: column;
             align-items: center;
         }
+
         #controls > div {
             display: flex;
         }
+
         button {
             margin: 5px;
         }
+
         #startBtn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    padding: 10px 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            padding: 10px 20px;
+            z-index: 10;
         }
-    #fullscreenButton {
-    position: absolute;
-    top: 10%;
-    left: 10%;
-    transform: translate(-80%, -80%);
-    font-size: 24px;
-    padding: 10px 20px;
-}
     </style>
 </head>
 <body>
-  <div id="loadingScreen" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; background: url('https://i.gifer.com/3RXH.gif') center center no-repeat; display: none;">
+  <div id="loadingScreen" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; background: url('https://i.gifer.com/3RXH.gif') center center no-repeat; display: none; z-index: 100;">
     <div id="loadingBar" style="position: absolute; bottom: 0; left: 0; height: 10px; background-color: #00ff00; width: 0%;"></div>
   </div>
   <audio id="bgMusic" src="music.mp4"></audio>
 
-  <div id="divCanvas" style="position: relative;">
-    <button id="startBtn" onclick="hideStartButton()" style="z-index: 1;">Start Game</button>
-    <button id="fullscreenButton" style="z-index: 1;">[ ]</button>
-    <canvas id="gameCanvas" width="3000" height="2244" style="z-index: 0;"></canvas>
+  <div id="divCanvas">
+    <button id="startBtn" onclick="hideStartButton()">Start Game</button>
+    <canvas id="gameCanvas"></canvas>
   </div>
 
     <script>
+        // Inizializza il canvas per adattarsi alla finestra
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
@@ -77,6 +86,16 @@
         const healImg = new Image();
         const corasanImg = new Image();
         const spriteSheet = new Image();
+
+        // Imposta la dimensione del canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Chiama resizeCanvas all'avvio e quando la finestra viene ridimensionata
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         // Variabili per il movimento tramite tap
         let targetX = null;
@@ -216,8 +235,8 @@
       }
 
       const player = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
+        x: 0,
+        y: 0,
         width: 512,
         height: 512,
         speed: 20,
@@ -226,6 +245,12 @@
         sourceWidth: 0,
         sourceHeight: 0,
       };
+
+      // Posizione il giocatore al centro all'inizio
+      function resetPlayerPosition() {
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height / 2 - player.height / 2;
+      }
 
       function setSprite(spriteIndex) {
         const sprite = spriteData[currentRow][spriteIndex];
@@ -271,8 +296,6 @@
         }
       }
 
-      animateCharacter(player);
-
       function updatePlayerSize() {
           let scale = 1 + (score / 100) - (briocheHits / 50);
 
@@ -283,8 +306,8 @@
               scale = Math.max(0.5, Math.min(2, scale)); // Limita tra 0.5 e 2
           }
 
-          player.width = 512 * scale;
-          player.height = 512 * scale;
+          player.width = 312 * scale;
+          player.height = 312 * scale;
       }
 
       function drawPlayer() {
@@ -482,8 +505,6 @@
           setTimeout(scheduleSpawnItems, spawnInterval);
       }
 
-      scheduleSpawnItems();
-
       function healItem() {
         const existingHealItem = items.find(item => item.type === 'heal.gif');
 
@@ -554,11 +575,6 @@
         }
       }
 
-      function getCanvasPosition() {
-        const canvasRect = canvas.getBoundingClientRect();
-        return { x: canvasRect.left, y: canvasRect.top };
-      }
-
       function checkCollision(a, b) {
           return (
               a.x < b.x + b.width &&
@@ -622,6 +638,11 @@
       let lastFlipTime = 0;
 
       function gameLoop() {
+        // Ridimensiona il canvas se necessario
+        if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+          resizeCanvas();
+        }
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         renderBackground();
         updatePlayerPosition();
@@ -637,16 +658,34 @@
 
         if (gameOver) {
           clearInterval(gameInterval);
-          setTimeout(showGameOverScreen); // Display game over screen after a NOW 0 second delay
+          setTimeout(showGameOverScreen); // Display game over screen after a 0 second delay
         }
       }
 
       function hideStartButton() {
-        const startBtn = document.getElementById('startBtn');
         startBtn.style.display = 'none';
+
+        // Richiedi la modalità schermo intero
+        requestFullscreen(document.documentElement);
+      }
+
+      // Funzione per richiedere lo schermo intero
+      function requestFullscreen(element) {
+        if (element.requestFullscreen) {
+          element.requestFullscreen().catch(err => {
+            console.log('Errore durante la richiesta di modalità schermo intero:', err);
+          });
+        } else if (element.mozRequestFullScreen) { // Firefox
+          element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) { // Chrome, Safari e Opera
+          element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { // IE/Edge
+          element.msRequestFullscreen();
+        }
       }
 
       function startGame() {
+        resetPlayerPosition(); // Centra il giocatore all'inizio
         isFirstHealItemSpawn = true;
         currentLevel = 0;
         score = 0;
@@ -655,7 +694,7 @@
         animateCharacter(player); // Call animateCharacter once before starting the game loop
         gameLoop();
         bgMusic.play();
-        setInterval(spawnItems, 1000); // Start spawning items immediately
+        scheduleSpawnItems(); // Inizia a generare oggetti immediatamente
       }
 
       function endGame() {
@@ -686,11 +725,13 @@
         gameOverScreen.style.height = '100%';
         gameOverScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         gameOverScreen.style.display = 'flex';
+        gameOverScreen.style.flexDirection = 'column';
         gameOverScreen.style.justifyContent = 'center';
         gameOverScreen.style.alignItems = 'center';
         gameOverScreen.style.color = 'white';
         gameOverScreen.style.fontSize = '48px';
-        gameOverScreen.innerText = 'Game Over! Relax raggiunto: ' + score + '\nClicca ancora per insistere.';
+        gameOverScreen.style.textAlign = 'center';
+        gameOverScreen.innerHTML = 'Game Over! Relax raggiunto: ' + score + '<br>Clicca ancora per insistere.';
         document.body.appendChild(gameOverScreen);
 
         const restartBtn = document.createElement('button');
@@ -705,7 +746,7 @@
         gameOverScreen.appendChild(restartBtn);
       }
 
-      // Gestione eventi touch (sostituisce le funzioni originali)
+      // Gestione eventi touch
       function handleTouchStart(event) {
         event.preventDefault();
 
@@ -739,17 +780,26 @@
       canvas.addEventListener('touchmove', handleTouchMove);
       canvas.addEventListener('touchend', handleTouchEnd);
 
-      function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          }
-        }
-      }
+      // Ascoltatori evento per il cambiamento dello stato fullscreen
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
-      document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
+      function handleFullscreenChange() {
+        if (!document.fullscreenElement &&
+            !document.webkitFullscreenElement &&
+            !document.mozFullScreenElement &&
+            !document.msFullscreenElement) {
+          // Siamo usciti dalla modalità fullscreen
+          console.log('Uscita dalla modalità fullscreen');
+        } else {
+          // Siamo entrati nella modalità fullscreen
+          console.log('Entrata nella modalità fullscreen');
+        }
+        // Ridimensiona il canvas dopo il cambio di modalità
+        resizeCanvas();
+      }
 
       function preloadImage(url) {
         var img = new Image();
