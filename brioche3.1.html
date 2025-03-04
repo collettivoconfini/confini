@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brioche Survivors</title>
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            background-color: #111;
+            border: 4px solid #444;
+        }
+
+        #startScreen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+            color: white;
+        }
+
+        #loadingScreen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            z-index: 20;
+        }
+
+        #loadingBar {
+            width: 300px;
+            height: 20px;
+            background-color: #222;
+            border: 2px solid #555;
+            margin-top: 20px;
+        }
+
+        #loadingProgress {
+            width: 0%;
+            height: 100%;
+            background-color: #0f0;
+        }
+
+        .warning-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0.3); /* Nebbia rossa semi-trasparente */
+    z-index: 8; /* Sopra il gioco ma sotto la UI */
+    display: none; /* Inizialmente nascosto */
+    pointer-events: none; /* Non interferisce con i clic */
+    animation: warningPulse 0.6s infinite; /* Effetto pulsante */
+}
+
+@keyframes warningPulse {
+    0% { opacity: 0.1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 0.1; }
+}
+
+        .btn {
+            padding: 15px 30px;
+            background-color: #4a2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 24px;
+            margin: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #5c3;
+        }
+
+        #fullscreenBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid white;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        #statsDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+            z-index: 5;
+            text-shadow: 2px 2px 2px black;
+        }
+
+        .title {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+      <div id="warningEffect" class="warning-effect"></div>
+
+        <div id="loadingScreen">
+            <h1 class="title">Loading Game...</h1>
+            <div id="loadingBar">
+                <div id="loadingProgress"></div>
+            </div>
+        </div>
+
+        <div id="startScreen">
+            <h1 class="title">Brioche Survivors</h1>
+            <button id="startBtn" class="btn pulse">Start Game</button>
+        </div>
+
+        <div id="gameOverScreen">
+            <h1 class="title">Game Over</h1>
+            <h2 id="finalScore">Relax: 0</h2>
+            <button id="restartBtn" class="btn">ANCORAH</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+        <button id="fullscreenBtn">[ ]</button>
+        <div id="statsDisplay">Relax: 0</div>
+    </div>
+
+    <audio id="bgMusic" src="music.mp4" preload="auto"></audio>
+
+    <script>
+        // Game elements and variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const statsDisplay = document.getElementById('statsDisplay');
+        const finalScore = document.getElementById('finalScore');
+        const bgMusic = document.getElementById('bgMusic');
+        const tapMovement = {
+    targetX: null, // Posizione X del tap
+    targetY: null, // Posizione Y del tap
+    moving: false  // Indica se il personaggio si sta muovendo verso il target
+};
+
+        // Game state
+        let isGameRunning = false;
+        let score = 0;
+        let level = 0;
+        let gameLoopId;
+        let lastTimestamp = 0;
+        let spawnTimer = 0;
+        let bossTimer = 0;
+        let isBossActive = false;
+        let bossSpawned = false;
+        let bossSpawnTime = 0;
+        let cloudsX = 0;
+        let bossWarningActive = false;
+let bossWarningTimer = 0;
+
+        // Game settings
+        const LEVEL_DURATION = 30000; // 30 seconds per level
+        const SPAWN_INTERVAL = 1000; // 1 second between spawns initially
+        const BOSS_DURATION = 10000; // 10 seconds boss duration
+        const BOSS_WARNING_DURATION = 3000; // 3 secondi di avviso
+
+
+
+
+        // Game assets
+        const assets = {
+            player: { src: 'spriteAlessio.png' },
+            backgrounds: [
+                { src: 'level0.jpg' },
+                { src: 'level1.jpg' }
+            ],
+            maps: [
+                { src: 'map0.png' },
+                { src: 'map1.png' }
+            ],
+            items: {
+                brioche: { src: 'brioche.png' },
+                mary: { src: 'mary.png' },
+                heal: { src: 'heal.gif' },
+                boss: { src: 'polizia.gif' }
+            }
+        };
+
+        // Game objects
+        const player = {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 80,
+            speed: 5,
+            direction: 'right',
+            frameX: 0,
+            frameY: 0,
+            maxFrames: 6,
+            frameTimer: 0,
+            frameInterval: 150,  // Slowed down animation speed
+            interactionType: null // Track the last interaction
+        };
+
+        const camera = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0
+        };
+
+        let items = [];
+        let boss = null;
+
+        // Assets loading
+        const loadedAssets = {};
+        let assetsToLoad = 0;
+        let assetsLoaded = 0;
+
+        // Input handling
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+
+        // Touch controls (rimuovi o commenta)
+        /*
+        const touch = {
+            active: false,
+            startX: 0,
+            startY: 0,
+            moveX: 0,
+            moveY: 0
+        };
+        */
+
+        // Initialization
+        function init() {
+            // Set canvas size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Set player initial position
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height / 2 - player.height / 2;
+
+            // Set camera dimensions
+            camera.width = canvas.width;
+            camera.height = canvas.height;
+
+            // Start loading assets
+            loadAssets();
+
+            // Add event listeners
+            window.addEventListener('resize', onResize);
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+            canvas.addEventListener('touchstart', onTouchStart); // Aggiungi il gestore per il tap su dispositivi touch
+canvas.addEventListener('click', onCanvasClick); // Aggiungi il gestore per il click su desktop
+            canvas.addEventListener('touchstart', onTouchStart);
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+            // Safety timeout to bypass loading screen if it gets stuck
+            setTimeout(() => {
+                if (loadingScreen.style.display !== 'none') {
+                    loadingScreen.style.display = 'none';
+                    startGame();
+                }
+            }, 8000); // 8 seconds timeout
+        }
+
+        function loadAssets() {
+            // Count total assets to load
+            assetsToLoad = 1 + assets.backgrounds.length + assets.maps.length + Object.keys(assets.items).length;
+
+            // Load player sprite
+            loadedAssets.player = new Image();
+            loadedAssets.player.src = assets.player.src;
+            loadedAssets.player.onload = function() {
+                assetLoaded();
+            };
+            loadedAssets.player.onerror = function() {
+                assetLoaded();
+            };
+
+            // Load backgrounds
+            loadedAssets.backgrounds = [];
+            assets.backgrounds.forEach((bg, index) => {
+                loadedAssets.backgrounds[index] = new Image();
+                loadedAssets.backgrounds[index].src = bg.src;
+                loadedAssets.backgrounds[index].onload = function() {
+                    assetLoaded();
+                };
+                loadedAssets.backgrounds[index].onerror = function() {
+                    assetLoaded();
+                };
+            });
+
+            // Load maps
+            loadedAssets.maps = [];
+            assets.maps.forEach((map, index) => {
+                loadedAssets.maps[index] = new Image();
+                loadedAssets.maps[index].src = map.src;
+                loadedAssets.maps[index].onload = function() {
+                    assetLoaded();
+                };
+                loadedAssets.maps[index].onerror = function() {
+                    assetLoaded();
+                };
+            });
+
+            // Load items
+            loadedAssets.items = {};
+            for (const [key, item] of Object.entries(assets.items)) {
+                loadedAssets.items[key] = new Image();
+                loadedAssets.items[key].src = item.src;
+                loadedAssets.items[key].onload = function() {
+                    assetLoaded();
+                };
+                loadedAssets.items[key].onerror = function() {
+                    assetLoaded();
+                };
+            }
+        }
+
+        function assetLoaded() {
+            assetsLoaded++;
+            updateLoadingProgress();
+        }
+
+        function updateLoadingProgress() {
+            const progress = (assetsLoaded / assetsToLoad) * 100;
+            document.getElementById('loadingProgress').style.width = `${progress}%`;
+
+            if (assetsLoaded >= assetsToLoad) {
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }
+
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!isGameRunning) return;
+
+            // Calculate delta time
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update game state
+            update(deltaTime);
+
+            // Render game
+            render();
+
+            // Continue game loop
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function update(deltaTime) {
+            // Update level timer
+            bossTimer += deltaTime;
+
+  // Check for boss warning
+  if (bossTimer >= LEVEL_DURATION - BOSS_WARNING_DURATION && !bossWarningActive && !bossSpawned) {
+      startBossWarning();
+      bossWarningActive = true;
+  }
+
+  // Check for level change
+  if (bossTimer >= LEVEL_DURATION && !bossSpawned) {
+      spawnBoss();
+      bossSpawned = true;
+      bossSpawnTime = Date.now();
+  }
+
+  function startBossWarning() {
+    const warningEffect = document.getElementById('warningEffect');
+    warningEffect.style.display = 'block';
+
+    // Riproduci un suono di avviso se lo desideri
+    // const warningSound = new Audio('warning.mp3');
+    // warningSound.play();
+
+    setTimeout(() => {
+        warningEffect.style.display = 'none';
+        spawnBoss();
+        bossSpawned = true;
+        bossSpawnTime = Date.now();
+        bossWarningActive = false;
+    }, BOSS_WARNING_DURATION);
+}
+
+            // Check for level change
+            if (bossTimer >= LEVEL_DURATION && !bossSpawned) {
+                spawnBoss();
+                bossSpawned = true;
+                bossSpawnTime = Date.now();
+            }
+
+            // Check if boss duration is over
+            if (boss && Date.now() - bossSpawnTime >= BOSS_DURATION) {
+                boss = null;
+                isBossActive = false;
+                advanceLevel();
+            }
+
+            // Update clouds position
+            cloudsX -= 0.5; // Slow horizontal movement
+            if (cloudsX <= -canvas.width) {
+                cloudsX = 0;
+            }
+
+            // Update player position
+            updatePlayerPosition();
+
+            // Update player animation
+            updatePlayerAnimation(deltaTime);
+
+            // Update camera position
+            updateCamera();
+
+            // Update items
+            updateItems(deltaTime);
+
+            // Spawn new items
+            spawnTimer += deltaTime;
+            if (spawnTimer >= getSpawnInterval()) {
+                spawnItems();
+                spawnTimer = 0;
+            }
+
+            // Check collisions
+            checkCollisions();
+
+            // Update stats display
+            statsDisplay.textContent = `Relax: ${score}`;
+        }
+
+        function render() {
+            // Draw background
+            drawBackground();
+
+            // Draw items
+            drawItems();
+
+            // Draw player
+            drawPlayer();
+        }
+
+        // Player functions
+        function updatePlayerPosition() {
+          let dx = 0;
+          let dy = 0;
+
+          // Tap movement
+          if (tapMovement.moving && tapMovement.targetX !== null && tapMovement.targetY !== null) {
+              const targetDx = tapMovement.targetX - player.x - player.width / 2;
+              const targetDy = tapMovement.targetY - player.y - player.height / 2;
+              const distance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+
+              // Normalizza e applica la velocità
+              dx = targetDx / distance * player.speed;
+              dy = targetDy / distance * player.speed;
+
+              // Aggiorna la direzione del personaggio
+              if (dx < 0) player.direction = 'left';
+              if (dx > 0) player.direction = 'right';
+          }
+
+          // Keyboard movement (opzionale, se vuoi mantenere il movimento da tastiera)
+          if (keys.ArrowUp || keys.w) dy -= player.speed;
+          if (keys.ArrowDown || keys.s) dy += player.speed;
+          if (keys.ArrowLeft || keys.a) {
+              dx -= player.speed;
+              player.direction = 'left';
+          }
+          if (keys.ArrowRight || keys.d) {
+              dx += player.speed;
+              player.direction = 'right';
+          }
+
+          // Applica il movimento
+          player.x += dx;
+          player.y += dy;
+
+          // Mantieni il personaggio nei limiti dello schermo
+          player.x = Math.max(0, Math.min(canvas.width * 3 - player.width, player.x));
+          player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+      }
+
+      function onCanvasClick(e) {
+    if (!isGameRunning) return;
+
+    // Ottieni le coordinate del click rispetto al canvas
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Imposta la posizione del target (aggiungi l'offset della camera per convertire in coordinate mondiali)
+    tapMovement.targetX = clickX + camera.x;
+    tapMovement.targetY = clickY + camera.y;
+    tapMovement.moving = true;
+}
+
+// Aggiungi l'event listener per il click
+canvas.addEventListener('click', onCanvasClick);
+
+            // Touch movement (rimuovi o commenta)
+          /*
+          if (touch.active) {
+              dx = touch.moveX * player.speed * 0.1;
+              dy = touch.moveY * player.speed * 0.1;
+              if (dx < 0) player.direction = 'left';
+              if (dx > 0) player.direction = 'right';
+          }
+          */
+
+            // Apply movement
+
+
+            // Keep player in bounds
+            player.x = Math.max(0, Math.min(canvas.width * 3 - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+
+
+        function updatePlayerAnimation(deltaTime) {
+            player.frameTimer += deltaTime;
+
+            if (player.frameTimer >= player.frameInterval) {
+                player.frameTimer = 0;
+                player.frameX = (player.frameX + 1) % player.maxFrames;
+            }
+
+            // Set frameY based on interaction type
+            if (player.interactionType === 'brioche') {
+                player.frameY = 1; // Second row for brioche interaction
+            } else if (player.interactionType === 'mary') {
+                player.frameY = 2; // Third row for mary interaction
+            } else {
+                player.frameY = 0; // First row for normal movement
+            }
+
+            // Reset interaction type after a short period
+            if (player.interactionType) {
+                setTimeout(() => {
+                    player.interactionType = null;
+                }, 500);
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+
+            if (player.direction === 'left') {
+                ctx.translate(player.x + player.width - camera.x, player.y - camera.y);
+                ctx.scale(-1, 1);
+            } else {
+                ctx.translate(player.x - camera.x, player.y - camera.y);
+            }
+
+            // Draw player sprite
+            const spriteSize = 256; // Size of a single sprite in the sheet
+            if (loadedAssets.player && loadedAssets.player.complete) {
+                ctx.drawImage(
+                    loadedAssets.player,
+                    player.frameX * spriteSize, player.frameY * spriteSize,
+                    spriteSize, spriteSize,
+                    0, 0,
+                    player.width, player.height
+                );
+            } else {
+                // Fallback if sprite not loaded - draw a simple rectangle
+                ctx.fillStyle = 'red';
+                ctx.fillRect(0, 0, player.width, player.height);
+            }
+
+            ctx.restore();
+        }
+
+        // Camera functions
+        function updateCamera() {
+            // Camera follows player
+            camera.x = player.x + player.width / 2 - camera.width / 2;
+            camera.y = player.y + player.height / 2 - camera.height / 2;
+
+            // Clamp camera to level bounds
+            camera.x = Math.max(0, Math.min(canvas.width * 2, camera.x));
+            camera.y = Math.max(0, Math.min(canvas.height - camera.height, camera.y));
+        }
+
+        // Item functions
+        function spawnItems() {
+            if (isBossActive) return; // Don't spawn items during boss fight
+
+            const numItems = 1 + Math.floor(level / 2); // More items spawn as level increases
+
+            for (let i = 0; i < numItems; i++) {
+                const itemType = Math.random() < 0.6 ? 'mary' : 'brioche';
+
+                const item = {
+                    type: itemType,
+                    x: Math.random() * (canvas.width * 3),
+                    y: Math.random() * canvas.height,
+                    width: 40,
+                    height: 40,
+                    speed: 1 + Math.random() * 2,
+                    direction: Math.random() * Math.PI * 2
+                };
+
+                items.push(item);
+            }
+
+            // Occasionally spawn a heal item
+            if (Math.random() < 0.05) {
+                const healItem = {
+                    type: 'heal',
+                    x: Math.random() * (canvas.width * 3),
+                    y: Math.random() * canvas.height,
+                    width: 60,
+                    height: 60,
+                    speed: 0.5,
+                    direction: Math.random() * Math.PI * 2,
+                    lifespan: 10000, // 10 seconds
+                    timeSinceSpawn: 0
+                };
+
+                items.push(healItem);
+            }
+        }
+
+        function spawnBoss() {
+            isBossActive = true;
+
+            boss = {
+                type: 'boss',
+                x: canvas.width * 3 - 200,
+                y: canvas.height / 2 - 100,
+                width: 200,
+                height: 200,
+                speed: 3 + level * 0.5, // Boss gets faster with each level
+                direction: Math.PI // Start moving left
+            };
+        }
+
+        function updateItems(deltaTime) {
+            // Update regular items
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+
+                // Move item
+                item.x += Math.cos(item.direction) * item.speed;
+                item.y += Math.sin(item.direction) * item.speed;
+
+                // Change direction occasionally
+                if (Math.random() < 0.01) {
+                    item.direction = Math.random() * Math.PI * 2;
+                }
+
+                // Keep items in bounds and bounce off edges
+                if (item.x < 0 || item.x > canvas.width * 3 - item.width) {
+                    item.direction = Math.PI - item.direction;
+                }
+                if (item.y < 0 || item.y > canvas.height - item.height) {
+                    item.direction = -item.direction;
+                }
+
+                // Remove heal items after their lifespan
+                if (item.type === 'heal') {
+                    item.timeSinceSpawn += deltaTime;
+                    if (item.timeSinceSpawn >= item.lifespan) {
+                        items.splice(i, 1);
+                    }
+                }
+            }
+
+            // Update boss
+            if (boss) {
+                // Move boss towards player
+                const dx = player.x - boss.x;
+                const dy = player.y - boss.y;
+                const angle = Math.atan2(dy, dx);
+
+                boss.x += Math.cos(angle) * boss.speed;
+                boss.y += Math.sin(angle) * boss.speed;
+            }
+        }
+
+        function drawItems() {
+            // Draw regular items
+            items.forEach(item => {
+                const itemImage = loadedAssets.items[item.type];
+                if (itemImage && itemImage.complete) {
+                    ctx.drawImage(
+                        itemImage,
+                        item.x - camera.x, item.y - camera.y,
+                        item.width, item.height
+                    );
+                } else {
+                    // Fallback if image not loaded
+                    ctx.fillStyle = item.type === 'brioche' ? 'brown' :
+                                    item.type === 'mary' ? 'pink' : 'green';
+                    ctx.fillRect(
+                        item.x - camera.x, item.y - camera.y,
+                        item.width, item.height
+                    );
+                }
+            });
+
+            // Draw boss
+            if (boss) {
+                const bossImage = loadedAssets.items.boss;
+                if (bossImage && bossImage.complete) {
+                    ctx.drawImage(
+                        bossImage,
+                        boss.x - camera.x, boss.y - camera.y,
+                        boss.width, boss.height
+                    );
+                } else {
+                    // Fallback if boss image not loaded
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(
+                        boss.x - camera.x, boss.y - camera.y,
+                        boss.width, boss.height
+                    );
+                }
+            }
+        }
+
+        function checkCollisions() {
+            // Check collisions with items
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+
+                if (
+                    player.x < item.x + item.width &&
+                    player.x + player.width > item.x &&
+                    player.y < item.y + item.height &&
+                    player.y + player.height > item.y
+                ) {
+                    // Apply item effect
+                    if (item.type === 'brioche') {
+                        score += 1;
+                        player.interactionType = 'brioche';
+                    } else if (item.type === 'mary') {
+                        score += 2;
+                        player.interactionType = 'mary';
+                    } else if (item.type === 'heal') {
+                        score += 5;
+                    }
+
+                    // Remove collected item
+                    items.splice(i, 1);
+                }
+            }
+
+            // Check collision with boss
+            if (boss &&
+                player.x < boss.x + boss.width &&
+                player.x + player.width > boss.x &&
+                player.y < boss.y + boss.height &&
+                player.y + player.height > boss.y
+            ) {
+                // Game over if player touches boss
+                endGame();
+            }
+        }
+
+        // Background functions
+        function drawBackground() {
+            const currentBg = loadedAssets.backgrounds[level % loadedAssets.backgrounds.length];
+            const currentMap = loadedAssets.maps[level % loadedAssets.maps.length];
+
+            // Draw background image
+            if (currentBg && currentBg.complete) {
+                ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Fallback if background not loaded
+                ctx.fillStyle = '#111';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Draw scrolling clouds (map) with smooth movement
+            if (currentMap && currentMap.complete) {
+                // Draw the clouds twice for seamless scrolling
+                ctx.drawImage(currentMap, cloudsX, 0, canvas.width, canvas.height);
+                ctx.drawImage(currentMap, cloudsX + canvas.width, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Game control functions
+        function startGame() {
+            startScreen.style.display = 'none';
+            isGameRunning = true;
+            score = 0;
+            level = 0;
+            items = [];
+            boss = null;
+            bossTimer = 0;
+            bossSpawned = false;
+            isBossActive = false;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height / 2 - player.height / 2;
+
+            // Play background music
+            bgMusic.currentTime = 0;
+            bgMusic.play();
+
+            // Start game loop
+            lastTimestamp = performance.now();
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            startGame();
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            cancelAnimationFrame(gameLoopId);
+
+            // Show game over screen
+            finalScore.textContent = `Relax: ${score}`;
+            gameOverScreen.style.display = 'flex';
+
+            // Stop background music
+            bgMusic.pause();
+        }
+
+        function advanceLevel() {
+            level++;
+            bossTimer = 0;
+            bossSpawned = false;
+            isBossActive = false;
+            boss = null;
+            items = []; // Clear items for new level
+            bossWarningActive = false; // Resetta il warning
+
+        }
+
+        // Helper functions
+        function getSpawnInterval() {
+            // Spawn items faster as levels increase
+            return Math.max(200, SPAWN_INTERVAL - level * 100);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                canvas.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Event handlers
+        function onResize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            camera.width = canvas.width;
+            camera.height = canvas.height;
+        }
+
+        function onKeyDown(e) {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+        }
+
+        function onKeyUp(e) {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        }
+
+        function onTouchStart(e) {
+          e.preventDefault();
+
+          // Se c'è un solo tocco, trattalo come un tap
+          if (e.touches.length === 1) {
+              const touch = e.touches[0];
+              const rect = canvas.getBoundingClientRect();
+              const touchX = touch.clientX - rect.left;
+              const touchY = touch.clientY - rect.top;
+
+              // Imposta la posizione del target
+              tapMovement.targetX = touchX + camera.x;
+              tapMovement.targetY = touchY + camera.y;
+              tapMovement.moving = true;
+          }
+      }
+
+        /*
+function onTouchMove(e) {
+    e.preventDefault();
+    if (!touch.active) return;
+
+    const touchEvent = e.touches[0];
+    touch.moveX = touchEvent.clientX - touch.startX;
+    touch.moveY = touchEvent.clientY - touch.startY;
+
+    // Update start position for smoother movement
+    touch.startX = touchEvent.clientX;
+    touch.startY = touchEvent.clientY;
+}
+
+function onTouchEnd(e) {
+    e.preventDefault();
+    touch.active = false;
+    touch.moveX = 0;
+    touch.moveY = 0;
+}
+*/
+
+        // Initialize game when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
