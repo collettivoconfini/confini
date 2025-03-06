@@ -197,10 +197,10 @@
         const finalScore = document.getElementById('finalScore');
         const bgMusic = document.getElementById('bgMusic');
         const tapMovement = {
-    targetX: null, // Posizione X del tap
-    targetY: null, // Posizione Y del tap
-    moving: false  // Indica se il personaggio si sta muovendo verso il target
-};
+            targetDirection: null, // Direzione verso cui muoversi (angolo in radianti)
+            moving: false,         // Indica se il personaggio si sta muovendo
+            speed: 5               // Velocità di movimento
+        };
 
         // Game state
         let isGameRunning = false;
@@ -220,7 +220,7 @@ let bossWarningTimer = 0;
         // Game settings
         const LEVEL_DURATION = 30000; // 30 seconds per level
         const SPAWN_INTERVAL = 1000; // 1 second between spawns initially
-        const BOSS_DURATION = 10000; // 10 seconds boss duration
+        const BOSS_DURATION = 20000; // 20 seconds boss duration
         const BOSS_WARNING_DURATION = 3000; // 3 secondi di avviso
 
 
@@ -288,17 +288,6 @@ let bossWarningTimer = 0;
             d: false
         };
 
-        // Touch controls (rimuovi o commenta)
-        /*
-        const touch = {
-            active: false,
-            startX: 0,
-            startY: 0,
-            moveX: 0,
-            moveY: 0
-        };
-        */
-
         // Initialization
         function init() {
             // Set canvas size
@@ -320,12 +309,12 @@ let bossWarningTimer = 0;
             window.addEventListener('resize', onResize);
             window.addEventListener('keydown', onKeyDown);
             window.addEventListener('keyup', onKeyUp);
-            canvas.addEventListener('touchstart', onTouchStart); // Aggiungi il gestore per il tap su dispositivi touch
-canvas.addEventListener('click', onCanvasClick); // Aggiungi il gestore per il click su desktop
             canvas.addEventListener('touchstart', onTouchStart);
+            canvas.addEventListener('click', onCanvasClick);
             startBtn.addEventListener('click', startGame);
             restartBtn.addEventListener('click', restartGame);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
+
 
             // Safety timeout to bypass loading screen if it gets stuck
             setTimeout(() => {
@@ -520,79 +509,72 @@ canvas.addEventListener('click', onCanvasClick); // Aggiungi il gestore per il c
 
         // Player functions
         function updatePlayerPosition() {
-          let dx = 0;
-          let dy = 0;
+            let dx = 0;
+            let dy = 0;
 
-          // Tap movement
-          if (tapMovement.moving && tapMovement.targetX !== null && tapMovement.targetY !== null) {
-              const targetDx = tapMovement.targetX - player.x - player.width / 2;
-              const targetDy = tapMovement.targetY - player.y - player.height / 2;
-              const distance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+            // Movimento continuo nella direzione del tap
+            if (tapMovement.moving && tapMovement.targetDirection !== null) {
+                dx = Math.cos(tapMovement.targetDirection) * tapMovement.speed;
+                dy = Math.sin(tapMovement.targetDirection) * tapMovement.speed;
 
-              // Normalizza e applica la velocità
-              dx = targetDx / distance * player.speed;
-              dy = targetDy / distance * player.speed;
+                // Aggiorna la direzione del personaggio (sprite)
+                if (dx < 0) player.direction = 'left';
+                if (dx > 0) player.direction = 'right';
+            }
 
-              // Aggiorna la direzione del personaggio
-              if (dx < 0) player.direction = 'left';
-              if (dx > 0) player.direction = 'right';
-          }
+            // Keyboard movement (opzionale, se vuoi mantenere il movimento da tastiera)
+            if (keys.ArrowUp || keys.w) dy -= player.speed;
+            if (keys.ArrowDown || keys.s) dy += player.speed;
+            if (keys.ArrowLeft || keys.a) {
+                dx -= player.speed;
+                player.direction = 'left';
+            }
+            if (keys.ArrowRight || keys.d) {
+                dx += player.speed;
+                player.direction = 'right';
+            }
 
-          // Keyboard movement (opzionale, se vuoi mantenere il movimento da tastiera)
-          if (keys.ArrowUp || keys.w) dy -= player.speed;
-          if (keys.ArrowDown || keys.s) dy += player.speed;
-          if (keys.ArrowLeft || keys.a) {
-              dx -= player.speed;
-              player.direction = 'left';
-          }
-          if (keys.ArrowRight || keys.d) {
-              dx += player.speed;
-              player.direction = 'right';
-          }
+            // Applica il movimento
+            player.x += dx;
+            player.y += dy;
 
-          // Applica il movimento
-          player.x += dx;
-          player.y += dy;
-
-          // Mantieni il personaggio nei limiti dello schermo
-          player.x = Math.max(0, Math.min(canvas.width * 3 - player.width, player.x));
-          player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-      }
-
-      function onCanvasClick(e) {
-    if (!isGameRunning) return;
-
-    // Ottieni le coordinate del click rispetto al canvas
-    const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    // Imposta la posizione del target (aggiungi l'offset della camera per convertire in coordinate mondiali)
-    tapMovement.targetX = clickX + camera.x;
-    tapMovement.targetY = clickY + camera.y;
-    tapMovement.moving = true;
-}
-
-// Aggiungi l'event listener per il click
-canvas.addEventListener('click', onCanvasClick);
-
-            // Touch movement (rimuovi o commenta)
-          /*
-          if (touch.active) {
-              dx = touch.moveX * player.speed * 0.1;
-              dy = touch.moveY * player.speed * 0.1;
-              if (dx < 0) player.direction = 'left';
-              if (dx > 0) player.direction = 'right';
-          }
-          */
-
-            // Apply movement
-
-
-            // Keep player in bounds
+            // Mantieni il personaggio nei limiti dello schermo
             player.x = Math.max(0, Math.min(canvas.width * 3 - player.width, player.x));
             player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        }
 
+        function onCanvasClick(e) {
+            if (!isGameRunning) return;
+
+            // Ottieni le coordinate del click rispetto al canvas
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left + camera.x;
+            const clickY = e.clientY - rect.top + camera.y;
+
+            // Calcola la direzione verso cui muoversi
+            const dx = clickX - (player.x + player.width / 2);
+            const dy = clickY - (player.y + player.height / 2);
+            tapMovement.targetDirection = Math.atan2(dy, dx);
+            tapMovement.moving = true;
+        }
+
+        function onTouchStart(e) {
+            e.preventDefault();
+
+            // Se c'è un solo tocco, trattalo come un tap
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left + camera.x;
+                const touchY = touch.clientY - rect.top + camera.y;
+
+                // Calcola la direzione verso cui muoversi
+                const dx = touchX - (player.x + player.width / 2);
+                const dy = touchY - (player.y + player.height / 2);
+                tapMovement.targetDirection = Math.atan2(dy, dx);
+                tapMovement.moving = true;
+            }
+        }
 
         function updatePlayerAnimation(deltaTime) {
             player.frameTimer += deltaTime;
@@ -825,16 +807,26 @@ canvas.addEventListener('click', onCanvasClick);
             }
 
             // Check collision with boss
-            if (boss &&
-                player.x < boss.x + boss.width &&
-                player.x + player.width > boss.x &&
-                player.y < boss.y + boss.height &&
-                player.y + player.height > boss.y
-            ) {
-                // Game over if player touches boss
-                endGame();
-            }
+        if (boss &&
+            player.x < boss.x + boss.width &&
+            player.x + player.width > boss.x &&
+            player.y < boss.y + boss.height &&
+            player.y + player.height > boss.y
+        ) {
+            // Diminuisci lo score invece di terminare il gioco
+            score = Math.max(0, score - 5); // Diminuisce lo score di 5, ma non va sotto zero
+
+            // Aggiorna immediatamente il display dello score
+            statsDisplay.textContent = `Relax: ${score}`;
+
+            // Aggiungi un breve periodo di invulnerabilità per evitare perdite multiple rapidamente
+            const tempBoss = boss;
+            boss = null;
+            setTimeout(() => {
+                boss = tempBoss;
+            }, 1000); // 1 secondo di invulnerabilità
         }
+          }
 
         // Background functions
         function drawBackground() {
@@ -875,6 +867,8 @@ canvas.addEventListener('click', onCanvasClick);
             // Play background music
             bgMusic.currentTime = 0;
             bgMusic.play();
+            setTimeout(endGame, 212000);
+
 
             // Start game loop
             lastTimestamp = performance.now();
@@ -944,45 +938,6 @@ canvas.addEventListener('click', onCanvasClick);
                 keys[e.key] = false;
             }
         }
-
-        function onTouchStart(e) {
-          e.preventDefault();
-
-          // Se c'è un solo tocco, trattalo come un tap
-          if (e.touches.length === 1) {
-              const touch = e.touches[0];
-              const rect = canvas.getBoundingClientRect();
-              const touchX = touch.clientX - rect.left;
-              const touchY = touch.clientY - rect.top;
-
-              // Imposta la posizione del target
-              tapMovement.targetX = touchX + camera.x;
-              tapMovement.targetY = touchY + camera.y;
-              tapMovement.moving = true;
-          }
-      }
-
-        /*
-function onTouchMove(e) {
-    e.preventDefault();
-    if (!touch.active) return;
-
-    const touchEvent = e.touches[0];
-    touch.moveX = touchEvent.clientX - touch.startX;
-    touch.moveY = touchEvent.clientY - touch.startY;
-
-    // Update start position for smoother movement
-    touch.startX = touchEvent.clientX;
-    touch.startY = touchEvent.clientY;
-}
-
-function onTouchEnd(e) {
-    e.preventDefault();
-    touch.active = false;
-    touch.moveX = 0;
-    touch.moveY = 0;
-}
-*/
 
         // Initialize game when page loads
         window.addEventListener('load', init);
