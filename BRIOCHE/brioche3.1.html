@@ -778,7 +778,7 @@
                 }
             }
         }
-
+let bossCollisionCooldown = false;
         function checkCollisions() {
             // Check collisions with items
             for (let i = items.length - 1; i >= 0; i--) {
@@ -806,35 +806,24 @@
                 }
             }
 
-            // Check collision with boss with improved handling
-            if (boss &&
-                player.x < boss.x + boss.width &&
-                player.x + player.width > boss.x &&
-                player.y < boss.y + boss.height &&
-                player.y + player.height > boss.y
-            ) {
-                // Reduce score instead of ending game
-                score = Math.max(0, score - 5);
+            // Controllo collisione con il boss
+      if (boss && !bossCollisionCooldown &&
+          player.x < boss.x + boss.width &&
+          player.x + player.width > boss.x &&
+          player.y < boss.y + boss.height &&
+          player.y + player.height > boss.y
+      ) {
+          // Riduci lo score
+          score = Math.max(0, score - 5);
+          statsDisplay.textContent = `Relax: ${score}`;
 
-                // Update score display immediately
-                statsDisplay.textContent = `Relax: ${score}`;
-
-                // Add brief invulnerability by moving boss temporarily off-screen
-                const tempBossX = boss.x;
-                const tempBossY = boss.y;
-
-                // Move boss away temporarily instead of nullifying it
-                boss.x = -1000;
-                boss.y = -1000;
-
-                setTimeout(() => {
-                    if (boss) {
-                        boss.x = tempBossX;
-                        boss.y = tempBossY;
-                    }
-                }, 1000); // 1 second invulnerability
-            }
-        }
+          // Attiva il cooldown per evitare collisioni ripetute
+          bossCollisionCooldown = true;
+          setTimeout(() => {
+              bossCollisionCooldown = false;
+          }, 1000); // 1 secondo di invulnerabilità
+      }
+  }
 
         // Background functions
         function drawBackground() {
