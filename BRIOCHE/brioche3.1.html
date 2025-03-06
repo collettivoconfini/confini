@@ -80,23 +80,23 @@
         }
 
         .warning-effect {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 0, 0, 0.3); /* Nebbia rossa semi-trasparente */
-    z-index: 8; /* Sopra il gioco ma sotto la UI */
-    display: none; /* Inizialmente nascosto */
-    pointer-events: none; /* Non interferisce con i clic */
-    animation: warningPulse 0.6s infinite; /* Effetto pulsante */
-}
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3); /* Nebbia rossa semi-trasparente */
+            z-index: 8; /* Sopra il gioco ma sotto la UI */
+            display: none; /* Inizialmente nascosto */
+            pointer-events: none; /* Non interferisce con i clic */
+            animation: warningPulse 0.6s infinite; /* Effetto pulsante */
+        }
 
-@keyframes warningPulse {
-    0% { opacity: 0.1; }
-    50% { opacity: 0.4; }
-    100% { opacity: 0.1; }
-}
+        @keyframes warningPulse {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.1; }
+        }
 
         .btn {
             padding: 15px 30px;
@@ -215,16 +215,16 @@
         let bossSpawnTime = 0;
         let cloudsX = 0;
         let bossWarningActive = false;
-let bossWarningTimer = 0;
+        let bossWarningTimer = 0;
+
+        // Add mobile device detection
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         // Game settings
         const LEVEL_DURATION = 30000; // 30 seconds per level
         const SPAWN_INTERVAL = 1000; // 1 second between spawns initially
         const BOSS_DURATION = 20000; // 20 seconds boss duration
         const BOSS_WARNING_DURATION = 3000; // 3 secondi di avviso
-
-
-
 
         // Game assets
         const assets = {
@@ -257,7 +257,7 @@ let bossWarningTimer = 0;
             frameY: 0,
             maxFrames: 6,
             frameTimer: 0,
-            frameInterval: 150,  // Slowed down animation speed
+            frameInterval: isMobile ? 200 : 150,  // Slower animation on mobile
             interactionType: null // Track the last interaction
         };
 
@@ -310,11 +310,11 @@ let bossWarningTimer = 0;
             window.addEventListener('keydown', onKeyDown);
             window.addEventListener('keyup', onKeyUp);
             canvas.addEventListener('touchstart', onTouchStart);
+            canvas.addEventListener('touchend', onTouchEnd);
             canvas.addEventListener('click', onCanvasClick);
             startBtn.addEventListener('click', startGame);
             restartBtn.addEventListener('click', restartGame);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
-
 
             // Safety timeout to bypass loading screen if it gets stuck
             setTimeout(() => {
@@ -399,8 +399,8 @@ let bossWarningTimer = 0;
         function gameLoop(timestamp) {
             if (!isGameRunning) return;
 
-            // Calculate delta time
-            const deltaTime = timestamp - lastTimestamp;
+            // Calculate delta time with a cap to prevent large jumps
+            const deltaTime = Math.min(timestamp - lastTimestamp, 100);
             lastTimestamp = timestamp;
 
             // Clear canvas
@@ -420,42 +420,13 @@ let bossWarningTimer = 0;
             // Update level timer
             bossTimer += deltaTime;
 
-  // Check for boss warning
-  if (bossTimer >= LEVEL_DURATION - BOSS_WARNING_DURATION && !bossWarningActive && !bossSpawned) {
-      startBossWarning();
-      bossWarningActive = true;
-  }
-
-  // Check for level change
-  if (bossTimer >= LEVEL_DURATION && !bossSpawned) {
-      spawnBoss();
-      bossSpawned = true;
-      bossSpawnTime = Date.now();
-  }
-
-  function startBossWarning() {
-    const warningEffect = document.getElementById('warningEffect');
-    warningEffect.style.display = 'block';
-
-    // Riproduci un suono di avviso se lo desideri
-    // const warningSound = new Audio('warning.mp3');
-    // warningSound.play();
-
-    setTimeout(() => {
-        warningEffect.style.display = 'none';
-        spawnBoss();
-        bossSpawned = true;
-        bossSpawnTime = Date.now();
-        bossWarningActive = false;
-    }, BOSS_WARNING_DURATION);
-}
-
-            // Check for level change
-            if (bossTimer >= LEVEL_DURATION && !bossSpawned) {
-                spawnBoss();
-                bossSpawned = true;
-                bossSpawnTime = Date.now();
+            // Check for boss warning
+            if (bossTimer >= LEVEL_DURATION - BOSS_WARNING_DURATION && !bossWarningActive && !bossSpawned) {
+                startBossWarning();
+                bossWarningActive = true;
             }
+
+            // Boss spawn is now handled in the startBossWarning function after timeout
 
             // Check if boss duration is over
             if (boss && Date.now() - bossSpawnTime >= BOSS_DURATION) {
@@ -494,6 +465,20 @@ let bossWarningTimer = 0;
 
             // Update stats display
             statsDisplay.textContent = `Relax: ${score}`;
+        }
+
+        function startBossWarning() {
+            const warningEffect = document.getElementById('warningEffect');
+            warningEffect.style.display = 'block';
+
+            // Set a timeout to hide warning and spawn boss
+            setTimeout(() => {
+                warningEffect.style.display = 'none';
+                spawnBoss();
+                bossSpawned = true;
+                bossSpawnTime = Date.now();
+                bossWarningActive = false;
+            }, BOSS_WARNING_DURATION);
         }
 
         function render() {
@@ -574,6 +559,10 @@ let bossWarningTimer = 0;
                 tapMovement.targetDirection = Math.atan2(dy, dx);
                 tapMovement.moving = true;
             }
+        }
+
+        function onTouchEnd() {
+            tapMovement.moving = false;
         }
 
         function updatePlayerAnimation(deltaTime) {
@@ -688,8 +677,8 @@ let bossWarningTimer = 0;
                 type: 'boss',
                 x: canvas.width * 3 - 200,
                 y: canvas.height / 2 - 100,
-                width: 200,
-                height: 200,
+                width: isMobile ? 150 : 200, // Smaller size on mobile
+                height: isMobile ? 150 : 200,
                 speed: 3 + level * 0.5, // Boss gets faster with each level
                 direction: Math.PI // Start moving left
             };
@@ -751,7 +740,7 @@ let bossWarningTimer = 0;
                 } else {
                     // Fallback if image not loaded
                     ctx.fillStyle = item.type === 'brioche' ? 'brown' :
-                                    item.type === 'mary' ? 'pink' : 'green';
+                                   item.type === 'mary' ? 'pink' : 'green';
                     ctx.fillRect(
                         item.x - camera.x, item.y - camera.y,
                         item.width, item.height
@@ -759,15 +748,26 @@ let bossWarningTimer = 0;
                 }
             });
 
-            // Draw boss
+            // Draw boss with optimized rendering
             if (boss) {
                 const bossImage = loadedAssets.items.boss;
                 if (bossImage && bossImage.complete) {
-                    ctx.drawImage(
-                        bossImage,
-                        boss.x - camera.x, boss.y - camera.y,
-                        boss.width, boss.height
-                    );
+                    if (isMobile) {
+                        // Simplified boss rendering for mobile
+                        const bossSize = Math.min(boss.width, boss.height);
+                        ctx.drawImage(
+                            bossImage,
+                            boss.x - camera.x, boss.y - camera.y,
+                            bossSize, bossSize
+                        );
+                    } else {
+                        // Full quality on desktop
+                        ctx.drawImage(
+                            bossImage,
+                            boss.x - camera.x, boss.y - camera.y,
+                            boss.width, boss.height
+                        );
+                    }
                 } else {
                     // Fallback if boss image not loaded
                     ctx.fillStyle = 'blue';
@@ -806,27 +806,35 @@ let bossWarningTimer = 0;
                 }
             }
 
-            // Check collision with boss
-        if (boss &&
-            player.x < boss.x + boss.width &&
-            player.x + player.width > boss.x &&
-            player.y < boss.y + boss.height &&
-            player.y + player.height > boss.y
-        ) {
-            // Diminuisci lo score invece di terminare il gioco
-            score = Math.max(0, score - 5); // Diminuisce lo score di 5, ma non va sotto zero
+            // Check collision with boss with improved handling
+            if (boss &&
+                player.x < boss.x + boss.width &&
+                player.x + player.width > boss.x &&
+                player.y < boss.y + boss.height &&
+                player.y + player.height > boss.y
+            ) {
+                // Reduce score instead of ending game
+                score = Math.max(0, score - 5);
 
-            // Aggiorna immediatamente il display dello score
-            statsDisplay.textContent = `Relax: ${score}`;
+                // Update score display immediately
+                statsDisplay.textContent = `Relax: ${score}`;
 
-            // Aggiungi un breve periodo di invulnerabilità per evitare perdite multiple rapidamente
-            const tempBoss = boss;
-            boss = null;
-            setTimeout(() => {
-                boss = tempBoss;
-            }, 1000); // 1 secondo di invulnerabilità
+                // Add brief invulnerability by moving boss temporarily off-screen
+                const tempBossX = boss.x;
+                const tempBossY = boss.y;
+
+                // Move boss away temporarily instead of nullifying it
+                boss.x = -1000;
+                boss.y = -1000;
+
+                setTimeout(() => {
+                    if (boss) {
+                        boss.x = tempBossX;
+                        boss.y = tempBossY;
+                    }
+                }, 1000); // 1 second invulnerability
+            }
         }
-          }
 
         // Background functions
         function drawBackground() {
@@ -864,11 +872,17 @@ let bossWarningTimer = 0;
             player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height / 2 - player.height / 2;
 
+            // Clear any existing end game timer
+            if (window.endGameTimer) {
+                clearTimeout(window.endGameTimer);
+            }
+
             // Play background music
             bgMusic.currentTime = 0;
             bgMusic.play();
-            setTimeout(endGame, 212000);
 
+            // Set new end game timer
+            window.endGameTimer = setTimeout(endGame, 212000);
 
             // Start game loop
             lastTimestamp = performance.now();
@@ -900,13 +914,12 @@ let bossWarningTimer = 0;
             boss = null;
             items = []; // Clear items for new level
             bossWarningActive = false; // Resetta il warning
-
         }
 
         // Helper functions
         function getSpawnInterval() {
             // Spawn items faster as levels increase
-            return Math.max(200, SPAWN_INTERVAL - level * 100);
+            return Math.max(200, SPAWN_INTERVAL - level * 100)
         }
 
         function toggleFullscreen() {
