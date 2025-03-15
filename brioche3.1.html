@@ -364,6 +364,9 @@
             // Set camera dimensions
             camera.width = canvas.width;
             camera.height = canvas.height;
+            window.addEventListener('DOMContentLoaded', function() {
+     checkOrientation();
+ });
 
             // Start loading assets
             loadAssets();
@@ -373,6 +376,8 @@
             window.addEventListener('keydown', onKeyDown);
             window.addEventListener('keyup', onKeyUp);
             canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            canvas.addEventListener('touchend', onTouchEnd);
+canvas.addEventListener('touchmove', onTouchMove);
             canvas.addEventListener('click', onCanvasClick);
             startBtn.addEventListener('click', startGame);
             restartBtn.addEventListener('click', restartGame);
@@ -392,11 +397,18 @@
         }
 
         // Funzione per controllare l'orientamento
+        // Migliora la funzione checkOrientation
         function checkOrientation() {
-            // Questa funzione viene gestita principalmente tramite CSS
-            // Ma possiamo aggiungere logica qui se necessario
             if (isMobile) {
-                const isPortrait = window.innerHeight > window.innerWidth;
+                // Usa sia la media query che il rapporto dimensionale
+                const isPortrait = window.matchMedia("(orientation: portrait)").matches ||
+                                   window.innerHeight > window.innerWidth;
+
+                console.log("Orientation check:",
+                            "isPortrait:", isPortrait,
+                            "dimensions:", window.innerWidth, "x", window.innerHeight);
+
+                // Forza la visualizzazione in base all'orientamento
                 if (isPortrait) {
                     orientationWarning.style.display = 'flex';
                 } else {
@@ -404,6 +416,7 @@
                 }
             }
         }
+
 
         function loadAssets() {
             // Count total assets to load
@@ -488,6 +501,9 @@
 
                         // Update game state
                         update(deltaTime);
+                        if (Math.floor(timestamp / 1000) !== Math.floor(lastTimestamp / 1000)) {
+       checkOrientation();
+   }
 
                         // Render game
                         render();
@@ -633,24 +649,59 @@
                     }
 
                     function onTouchStart(e) {
-                        e.preventDefault();
+            e.preventDefault();
 
-                        // Se c'è un solo tocco, trattalo come un tap
-                        if (e.touches.length === 1) {
-                            const touch = e.touches[0];
-                            const rect = canvas.getBoundingClientRect();
-                            const touchX = touch.clientX - rect.left + camera.x;
-                            const touchY = touch.clientY - rect.top + camera.y;
+            // Se c'è un solo tocco, trattalo come un tap
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left + camera.x;
+                const touchY = touch.clientY - rect.top + camera.y;
 
-                            // Calcola la direzione verso cui muoversi
-                            const dx = touchX - (player.x + player.width / 2);
-                            const dy = touchY - (player.y + player.height / 2);
-                            tapMovement.targetDirection = Math.atan2(dy, dx);
+                // Calcola la direzione verso cui muoversi
+                const dx = touchX - (player.x + player.width / 2);
+                const dy = touchY - (player.y + player.height / 2);
+                tapMovement.targetDirection = Math.atan2(dy, dx);
 
-                            // Attiva il movimento continuo
-                            tapMovement.moving = true;
-                        }
-                    }
+                // Attiva il movimento continuo
+                tapMovement.moving = true;
+
+                console.log("Touch start: Movement activated",
+                           "Direction:", tapMovement.targetDirection,
+                           "Target:", touchX, touchY);
+            }
+        }
+
+        function onTouchEnd(e) {
+            // Non fermare il movimento quando si rilascia il dito
+            // Questo è il cambiamento chiave - il personaggio continua
+            // a muoversi nella direzione del tap anche dopo il rilascio
+
+            // Opzionale: aggiungi questo log per debug
+            console.log("Touch end: Continuing movement");
+
+            // Se vuoi implementare un doppio tap per fermarsi:
+            // Misura il tempo tra i tap e ferma il movimento se è un doppio tap
+        }
+
+        function onTouchMove(e) {
+            e.preventDefault();
+
+            // Aggiorna la direzione se l'utente fa scorrere il dito
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left + camera.x;
+                const touchY = touch.clientY - rect.top + camera.y;
+
+                // Aggiorna la direzione del movimento
+                const dx = touchX - (player.x + player.width / 2);
+                const dy = touchY - (player.y + player.height / 2);
+                tapMovement.targetDirection = Math.atan2(dy, dx);
+
+                console.log("Touch move: Direction updated", tapMovement.targetDirection);
+            }
+        }
 
                     function updatePlayerAnimation(deltaTime) {
                         player.frameTimer += deltaTime;
